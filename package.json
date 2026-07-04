@@ -12,10 +12,10 @@
     "vite": "^8.0.12"
   },
   "dependencies": {
-    "@capacitor/app": "8.1.0",
-    "@capacitor/cli": "8.1.0",
-    "@capacitor/core": "8.1.0",
-    "@capacitor/ios": "8.1.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@ebarooni/capacitor-calendar": "^8.2.0"
   }
 }

@@ -287,9 +287,15 @@ export function initCalendarSyncTriggers() {
     }
   });
 
-  if (window.Capacitor?.isNativePlatform?.()) {
-    import('@capacitor/app').then(({ App }) => {
-      App.addListener('resume', () => runCalendarSync({ silent: true }));
-    }).catch(() => {});
-  }
+  // TODO: @capacitor/app vorübergehend deinstalliert (Versions-Konflikt mit
+  // capacitor-swift-pm 8.x, siehe Session-Notizen). Sobald ein kompatibler
+  // Patch-Release verfügbar ist, hier wieder aktivieren (Paket erneut via
+  // `npm install @capacitor/app@latest` installieren) UND diesen Block
+  // wiederherstellen, damit Resume-Events wieder einen Sync auslösen:
+  //
+  // if (window.Capacitor?.isNativePlatform?.()) {
+  //   import('@capacitor/app').then(({ App }) => {
+  //     App.addListener('resume', () => runCalendarSync({ silent: true }));
+  //   }).catch(() => {});
+  // }
 }
