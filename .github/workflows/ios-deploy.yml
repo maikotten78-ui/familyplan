@@ -11,7 +11,7 @@ on:
 jobs:
   build-and-upload:
     name: Build & Upload to App Store Connect
-    runs-on: macos-14   # Apple-Silicon-Runner (macOS 26 / Xcode 26 fähig)
+    runs-on: macos-26   # Apple-Silicon-Runner mit Xcode 26 / iOS 26 SDK (von Apple für App-Store-Uploads vorausgesetzt)
 
     steps:
       - name: Repository auschecken
