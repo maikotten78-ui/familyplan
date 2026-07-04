@@ -1,0 +1,1 @@
+import{t as e}from"./rolldown-runtime-D3qAFmwF.js";function t(e,t){if(r[e])try{r[e]()}catch(e){console.warn(`listener cleanup error:`,e)}r[e]=t}function n(){Object.keys(r).forEach(e=>{try{r[e]()}catch(t){console.warn(`unsubscribeAll error:`,e,t)}delete r[e]})}var r,i=e((()=>{r={}}));export{t as n,n as r,i as t};

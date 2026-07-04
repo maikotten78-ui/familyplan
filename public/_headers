@@ -1,0 +1,10 @@
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *
+
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com https://apis.google.com https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://schulferien-api.de https://ferien-api.de https://schulferien-api.de https://ferien-api.de https://*.googleapis.com https://apis.google.com https://www.gstatic.com https://accounts.google.com https://securetoken.googleapis.com https://famiplan-push.maikotten78.workers.dev https://famiplan-recipe-import.maikotten78.workers.dev https://api.allorigins.win https://famiplan.lemonsqueezy.com https://maps.apple.com https://wa.me; img-src 'self' data: blob: https://*.googleusercontent.com; media-src 'none'; object-src 'none'; frame-src https://famiplan.lemonsqueezy.com https://accounts.google.com https://family-task-2cacf.firebaseapp.com https://*.firebasedatabase.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

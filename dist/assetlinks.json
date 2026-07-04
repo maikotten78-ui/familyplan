@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.famiplan.app",
+    "sha256_cert_fingerprints": ["6C:1C:00:2B:DA:42:4B:F7:E5:02:73:8F:6A:C8:8F:8B:15:53:89:07:36:80:52:6A:3B:1C:B2:17:65:CC:D0:14"]
+  }
+}]
+
