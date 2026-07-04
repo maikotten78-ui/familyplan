@@ -1,0 +1,135 @@
+name: iOS Build & App Store Upload
+
+# Manuell im "Actions"-Tab auf GitHub startbar (Button "Run workflow").
+# Kann später auch automatisch bei jedem Push auf main laufen, indem der
+# auskommentierte "push"-Trigger unten aktiviert wird.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [ main ]
+
+jobs:
+  build-and-upload:
+    name: Build & Upload to App Store Connect
+    runs-on: macos-14   # Apple-Silicon-Runner (macOS 26 / Xcode 26 fähig)
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Web-App bauen
+        run: |
+          npm ci
+          npm run build
+
+      - name: Capacitor iOS synchronisieren
+        run: npx cap sync ios
+
+      - name: Xcode-Version anzeigen (zur Kontrolle)
+        run: xcodebuild -version
+
+      # ── Signing-Zertifikat & Provisioning Profile einrichten ──────────
+      - name: Zertifikat & Profil in temporären Schlüsselbund importieren
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/build_certificate.p12
+          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # Secrets aus Base64 zurück in Dateien wandeln
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERT_PATH
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+
+          # Temporären Schlüsselbund erstellen und als Standard setzen
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Zertifikat importieren
+          security import $CERT_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Erlaubt xcodebuild den Zugriff ohne UI-Passwort-Abfrage
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Provisioning Profile an die Stelle kopieren, an der Xcode danach sucht
+          mkdir -p ~/Library/MobileDevice/"Provisioning Profiles"
+          cp $PP_PATH ~/Library/MobileDevice/"Provisioning Profiles"
+
+      # ── App Store Connect API Key bereitstellen ───────────────────────
+      - name: API Key Datei anlegen
+        env:
+          APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+        run: |
+          mkdir -p $RUNNER_TEMP/private_keys
+          echo "$APPSTORE_PRIVATE_KEY" > $RUNNER_TEMP/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8
+
+      # ── Archivieren ────────────────────────────────────────────────
+      - name: App archivieren
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            clean archive \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM=Z563Z2YWKG \
+            PROVISIONING_PROFILE_SPECIFIER="famiplan AppStore Profile"
+
+      # ── exportOptions.plist erzeugen ──────────────────────────────────
+      - name: exportOptions.plist erzeugen
+        run: |
+          cat > $RUNNER_TEMP/exportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>Z563Z2YWKG</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>app.famiplan.app</key>
+              <string>famiplan AppStore Profile</string>
+            </dict>
+            <key>destination</key>
+            <string>upload</string>
+          </dict>
+          </plist>
+          EOF
+
+      # ── Exportieren & direkt zu App Store Connect hochladen ───────────
+      - name: Export & Upload zu App Store Connect
+        env:
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist $RUNNER_TEMP/exportOptions.plist \
+            -exportPath $RUNNER_TEMP/export \
+            -authenticationKeyPath $RUNNER_TEMP/private_keys/AuthKey_${APPSTORE_KEY_ID}.p8 \
+            -authenticationKeyID "$APPSTORE_KEY_ID" \
+            -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID"
+
+      # ── Aufräumen (auch wenn ein Schritt vorher fehlschlägt) ──────────
+      - name: Temporären Schlüsselbund entfernen
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
