@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import FirebaseCore
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -7,6 +8,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Firebase initialisieren (Voraussetzung für Push Notifications via FCM).
+        // Guard gegen Doppelt-Konfiguration, falls ein Plugin das bereits selbst tut.
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
         // Override point for customization after application launch.
         return true
     }

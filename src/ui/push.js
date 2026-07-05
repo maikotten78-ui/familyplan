@@ -11,6 +11,7 @@ import { isVisible, getA } from '../modules/tasks.js';
 import { fbFetch, getAuthToken } from '../modules/firebase.js';
 import { showSync } from './modal.js';
 import { isPremiumActive } from '../modules/premium.js';
+import { isNativePlatform, enableNativePush, disableNativePush } from '../modules/nativePush.js';
 
 // ── SETTINGS ──────────────────────────────────────────────────
 export function loadPushSettings() {
@@ -204,8 +205,10 @@ export function showPushPage() {
   overlay.id    = 'push-page';
   overlay.style.cssText = 'position:fixed;inset:0;background:#5C4EE5;z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(env(safe-area-inset-top),48px) 20px max(env(safe-area-inset-bottom,0px),80px);';
 
-  const supported     = 'Notification' in window && 'PushManager' in window;
-  const permission    = supported ? Notification.permission : 'denied';
+  const nativePlatform = isNativePlatform();
+  const supported     = nativePlatform || ('Notification' in window && 'PushManager' in window);
+  const permission    = nativePlatform ? (getPushSetting('enabled', false) ? 'granted' : 'default')
+                       : (supported ? Notification.permission : 'denied');
   const enabled       = getPushSetting('enabled', false);
   const mins          = getPushSetting('reminderMinutes', 30);
   const dailyEnabled  = getPushSetting('dailyEnabled', true);
@@ -358,17 +361,50 @@ export function showPushPage() {
   // Master button – iOS: requestPermission muss DIREKT im click-handler laufen
   document.getElementById('pp-master-btn').addEventListener('click', function() {
     const btn = this;
+    const statusEl = document.getElementById('pp-status');
+
     if (getPushSetting('enabled', false)) {
       btn.disabled = true; btn.textContent = '⏳ Bitte warten…';
-      disablePush().then(() => {
+      const disableFn = nativePlatform ? disableNativePush : disablePush;
+      disableFn().then(() => {
         btn.textContent = 'Push aktivieren';
         btn.style.background = '#F5F6FA'; btn.style.color = '#5C4EE5'; btn.style.borderColor = 'var(--border)';
-        document.getElementById('pp-status').textContent = 'Status: deaktiviert';
+        if (statusEl) statusEl.textContent = 'Status: deaktiviert';
         btn.disabled = false;
       });
       return;
     }
 
+    // ── NATIVE APP (iOS App Store/TestFlight): FCM/APNs statt Web-Push ──
+    if (nativePlatform) {
+      btn.textContent = '⏳ Erlaubnis anfragen…';
+      enableNativePush().then(result => {
+        if (!result.ok) {
+          btn.textContent = 'Push aktivieren'; btn.disabled = false;
+          if (result.reason === 'denied') {
+            showSync('Bitte in Einstellungen → famiplan → Mitteilungen erlauben');
+            if (statusEl) statusEl.textContent = 'Status: ✗ Blockiert';
+          } else {
+            showSync('Fehler beim Aktivieren – bitte erneut versuchen');
+            if (statusEl) statusEl.textContent = 'Fehler: kein Token erhalten';
+          }
+          return;
+        }
+        btn.textContent = '✓ Aktiv – deaktivieren';
+        btn.style.background = '#5C4EE5'; btn.style.color = 'white'; btn.style.borderColor = '#5C4EE5';
+        if (statusEl) statusEl.textContent = 'Status: ✓ Aktiv';
+        btn.disabled = false;
+        scheduleReminders();
+        showSync('🔔 Push-Benachrichtigungen aktiviert!');
+      }).catch(e => {
+        btn.textContent = 'Push aktivieren'; btn.disabled = false;
+        if (statusEl) statusEl.textContent = 'Fehler: ' + e.message;
+        showSync('Fehler: ' + e.message);
+      });
+      return;
+    }
+
+    // ── WEB/PWA (unverändert) ──────────────────────────────────────
     btn.textContent = '⏳ Erlaubnis anfragen…';
     Notification.requestPermission().then(permission => {
       const statusEl = document.getElementById('pp-status');
