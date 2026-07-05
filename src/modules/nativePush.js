@@ -49,11 +49,29 @@ export async function enableNativePush() {
   if (perm.receive !== 'granted') {
     return { ok: false, reason: 'denied' };
   }
-  const { token } = await FirebaseMessaging.getToken();
-  if (!token) return { ok: false, reason: 'no-token' };
-  await saveNativeTokenToServer(token);
-  setPushSetting('enabled', true);
-  return { ok: true };
+
+  // WICHTIG: Der APNs-Gerätetoken wird von Apple asynchron im Hintergrund
+  // zugewiesen (UIApplication.registerForRemoteNotifications()-Callback).
+  // Ein sofortiger getToken()-Aufruf direkt nach requestPermissions() kann
+  // dieser Zuweisung zuvorkommen und mit "No APNS token specified before
+  // fetching FCM Token" fehlschlagen. Daher mit kurzen Pausen wiederholen.
+  const delays = [0, 500, 1000, 1500, 2000, 3000]; // insgesamt ~8s
+  let lastError = null;
+  for (const delay of delays) {
+    if (delay) await new Promise(r => setTimeout(r, delay));
+    try {
+      const { token } = await FirebaseMessaging.getToken();
+      if (token) {
+        await saveNativeTokenToServer(token);
+        setPushSetting('enabled', true);
+        return { ok: true };
+      }
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  console.warn('enableNativePush: kein Token nach mehreren Versuchen:', lastError?.message);
+  return { ok: false, reason: 'no-token' };
 }
 
 // ── DEAKTIVIEREN ──────────────────────────────────────────────────
