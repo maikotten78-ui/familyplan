@@ -3,7 +3,7 @@
 // Onboarding-Flow, Family-Setup, Install-Prompt, FAB, shareInviteLink
 // ══════════════════════════════════════════════════════════════
 
-import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID } from '../modules/config.js';
+import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, genFamilyId } from '../modules/utils.js';
 import { fbFetch, fbSet, syncPublicFamily } from '../modules/firebase.js';
@@ -98,15 +98,22 @@ export async function obCreateFamily() {
   await syncPublicFamily();
 
   // ── Admin-Benachrichtigung (fire-and-forget) ──
-  fetch(`${PUSH_WORKER_URL}/push/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      familyId: ADMIN_FAMILY_ID,
-      type: 'default',
-      payload: { text: `🎉 Neue Familie: „${name}“ (${id})` }
-    })
-  }).catch(() => {});
+  // WICHTIG: gezielt per targetUid an jede einzelne Admin-User-ID senden,
+  // NICHT familyId:ADMIN_FAMILY_ID verwenden — das würde an ALLE
+  // Push-Abonnenten dieser Familie gehen (z.B. auch normale Mitglieder),
+  // nicht nur an den/die Admin(s).
+  (ADMIN_UIDS || []).forEach(adminUid => {
+    fetch(`${PUSH_WORKER_URL}/push/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        familyId: ADMIN_FAMILY_ID,
+        targetUid: adminUid,
+        type: 'default',
+        payload: { text: `🎉 Neue Familie: „${name}“ (${id})` }
+      })
+    }).catch(() => {});
+  });
 
   obGoTo(5);
 }
