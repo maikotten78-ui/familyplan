@@ -228,6 +228,15 @@ export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
   // Verhindert dass Daten der alten Familie nach Familienwechsel sichtbar bleiben
   unsubscribeAll();
 
+  // Falls zuvor der Demo-Modus aktiv war (z.B. "Demo ansehen" angetippt, dann
+  // ohne "Registrieren"-Button die App verlassen/neu gestartet und sich danach
+  // regulär eingeloggt): Flag entfernen, sonst bleiben loadBoard()/loadMeals()
+  // dauerhaft stumm inaktiv, obwohl familyId korrekt gesetzt ist.
+  if (localStorage.getItem('fp_demo_mode') === '1') {
+    localStorage.removeItem('fp_demo_mode');
+    document.getElementById('demo-banner')?.remove();
+  }
+
   setState({ tasks: [], boardPosts: {}, meals: {}, mealRecipes: {} });
 
   const joinedViaLink = localStorage.getItem('fp_joined_via_link') === '1';

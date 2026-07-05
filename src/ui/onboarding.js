@@ -445,11 +445,11 @@ export function obShowDemo() {
 
   const banner = document.createElement('div');
   banner.id = 'demo-banner';
-  banner.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#F59E0B;color:white;text-align:center;padding:10px 16px;font-size:13px;font-weight:700;z-index:500;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15)';
-  banner.innerHTML = '<span>👀 Demo-Modus</span><button onclick="window._app.exitDemoMode()" style="background:var(--surface);color:#F59E0B;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">Registrieren →</button>';
+  banner.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#F59E0B;color:white;text-align:center;padding:max(env(safe-area-inset-top),10px) 16px 10px;font-size:13px;font-weight:700;z-index:500;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15)';
+  banner.innerHTML = '<span>👀 Demo-Modus</span><button onclick="window._app.exitDemoMode()" style="background:var(--surface);color:#F59E0B;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;flex-shrink:0">Registrieren →</button>';
   document.body.appendChild(banner);
   const area = document.getElementById('scroll-area');
-  if (area) area.style.paddingTop = '62px';
+  if (area) area.style.paddingTop = 'calc(max(env(safe-area-inset-top),10px) + 42px)';
 }
 
 export function exitDemoMode() {
