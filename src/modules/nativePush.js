@@ -16,8 +16,8 @@
 // ══════════════════════════════════════════════════════════════
 
 import { state } from './state.js';
-import { fbFetch } from './firebase.js';
-import { DB_ROOT } from './config.js';
+import { fbFetch, getAuthToken } from './firebase.js';
+import { DB_ROOT, PUSH_WORKER_URL } from './config.js';
 
 // ── SETTINGS HELPER ─────────────────────────────────────────────
 // Bewusst dupliziert (statt aus ui/push.js importiert), um einen
@@ -84,8 +84,17 @@ export async function disableNativePush() {
   const { currentAuthUser, familyId } = state;
   if (currentAuthUser && familyId) {
     try {
-      await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, { method: 'DELETE' });
-    } catch (e) { console.warn('disableNativePush delete subscription:', e.message); }
+      // target:'ios' → Worker löscht nur platform/fcmToken, nicht eine
+      // evtl. parallele Web-Push-Subscription desselben Accounts.
+      const token = await getAuthToken().catch(() => null);
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      await fetch(`${PUSH_WORKER_URL}/push/unsubscribe`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ familyId, uid: currentAuthUser.uid, target: 'ios' }),
+      });
+    } catch (e) { console.warn('disableNativePush unsubscribe:', e.message); }
   }
   setPushSetting('enabled', false);
 }
@@ -108,8 +117,10 @@ async function saveNativeTokenToServer(token) {
     dailyHour:       getPushSetting('dailyHour', 7),
     updatedAt:       Date.now(),
   };
+  // PATCH statt PUT: nur diese Felder setzen, ohne eine evtl. parallel
+  // aktive Web-Push-Subscription (gleicher Account im Browser) zu löschen.
   await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, {
-    method: 'PUT',
+    method: 'PATCH',
     body:   JSON.stringify(data),
   });
 }

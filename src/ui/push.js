@@ -54,8 +54,10 @@ export async function savePushSubscriptionToServer(subscription) {
       dailyHour:        getPushSetting('dailyHour', 7),
       updatedAt:        Date.now(),
     };
+    // PATCH statt PUT: nur diese Felder setzen, ohne ein evtl. parallel
+    // aktives natives FCM-Token (gleicher Account in der iOS-App) zu löschen.
     await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, {
-      method: 'PUT',
+      method: 'PATCH',
       body:   JSON.stringify(data),
     });
   } catch (e) { console.warn('Save subscription error:', e); }
@@ -72,10 +74,12 @@ export async function disablePush() {
       const unsubToken = await getAuthToken().catch(() => null);
       const unsubHeaders = { 'Content-Type': 'application/json' };
       if (unsubToken) unsubHeaders['Authorization'] = 'Bearer ' + unsubToken;
+      // target:'web' → Worker löscht nur das Web-Push-Feld, nicht ein
+      // evtl. paralleles natives FCM-Token desselben Accounts.
       await fetch(`${PUSH_WORKER_URL}/push/unsubscribe`, {
         method: 'POST',
         headers: unsubHeaders,
-        body: JSON.stringify({ familyId, uid: currentAuthUser.uid }),
+        body: JSON.stringify({ familyId, uid: currentAuthUser.uid, target: 'web' }),
       });
     }
     setPushSetting('enabled', false);
