@@ -388,6 +388,9 @@ export function showPushPage() {
           if (result.reason === 'denied') {
             showSync('Bitte in Einstellungen → famiplan → Mitteilungen erlauben');
             if (statusEl) statusEl.textContent = 'Status: ✗ Blockiert';
+          } else if (result.reason === 'save-failed') {
+            showSync('Fehler beim Speichern – bitte erneut versuchen');
+            if (statusEl) statusEl.textContent = 'Fehler: Server hat Speichern abgelehnt';
           } else {
             showSync('Fehler beim Aktivieren – bitte erneut versuchen');
             if (statusEl) statusEl.textContent = 'Fehler: kein Token erhalten';

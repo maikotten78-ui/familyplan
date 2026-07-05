@@ -7,8 +7,14 @@ var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name
 var push_worker_default = {
   // ── HTTP Requests (subscribe/unsubscribe/send) ─────────────
   async fetch(request, env) {
+    // Erlaubte Ursprünge: Web-App (famiplan.app) UND native iOS-App
+    // (Capacitor-WKWebView läuft unter "capacitor://localhost", kein
+    // echtes Web-Origin — muss explizit erlaubt werden, sonst blockiert
+    // der Browser/WKWebView jeden fetch() aus der App an diesen Worker).
+    const allowedOrigins = ["https://famiplan.app", "capacitor://localhost"];
+    const requestOrigin = request.headers.get("Origin") || "";
     const corsHeaders = {
-      "Access-Control-Allow-Origin": "https://famiplan.app",
+      "Access-Control-Allow-Origin": allowedOrigins.includes(requestOrigin) ? requestOrigin : "https://famiplan.app",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization"
     };

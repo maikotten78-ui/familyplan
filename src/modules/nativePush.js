@@ -62,7 +62,13 @@ export async function enableNativePush() {
     try {
       const { token } = await FirebaseMessaging.getToken();
       if (token) {
-        await saveNativeTokenToServer(token);
+        // WICHTIG: Erfolg des Firebase-Writes prüfen, nicht nur den
+        // FCM-Token-Abruf. Ein Token ohne gespeicherten DB-Eintrag
+        // bedeutet: die App zeigt "Aktiv", aber es kommt nie ein Push an.
+        const saved = await saveNativeTokenToServer(token);
+        if (!saved) {
+          return { ok: false, reason: 'save-failed' };
+        }
         setPushSetting('enabled', true);
         return { ok: true };
       }
@@ -106,7 +112,7 @@ export async function disableNativePush() {
 // ob per Web-Push oder per FCM/APNs gesendet wird.
 async function saveNativeTokenToServer(token) {
   const { currentAuthUser, familyId, curUser } = state;
-  if (!currentAuthUser || !familyId) return;
+  if (!currentAuthUser || !familyId) return false;
   const data = {
     platform:        'ios',
     fcmToken:        token,
@@ -119,10 +125,21 @@ async function saveNativeTokenToServer(token) {
   };
   // PATCH statt PUT: nur diese Felder setzen, ohne eine evtl. parallel
   // aktive Web-Push-Subscription (gleicher Account im Browser) zu löschen.
-  await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, {
-    method: 'PATCH',
-    body:   JSON.stringify(data),
-  });
+  try {
+    const res = await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, {
+      method: 'PATCH',
+      body:   JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.warn('saveNativeTokenToServer: Firebase lehnte Schreibvorgang ab:', res.status, text.slice(0, 200));
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn('saveNativeTokenToServer error:', e.message);
+    return false;
+  }
 }
 
 // ── TOKEN-REFRESH ─────────────────────────────────────────────────
