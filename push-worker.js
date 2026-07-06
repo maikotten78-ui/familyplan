@@ -1,16 +1,15 @@
+import { ApnsClient, Notification as ApnsNotification } from '@fivesheepco/cloudflare-apns2';
+
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
 // push-worker.js
 var __defProp2 = Object.defineProperty;
 var __name2 = /* @__PURE__ */ __name((target, value) => __defProp2(target, "name", { value, configurable: true }), "__name");
+var __defProp22 = Object.defineProperty;
+var __name22 = /* @__PURE__ */ __name2((target, value) => __defProp22(target, "name", { value, configurable: true }), "__name");
 var push_worker_default = {
-  // ── HTTP Requests (subscribe/unsubscribe/send) ─────────────
   async fetch(request, env) {
-    // Erlaubte Ursprünge: Web-App (famiplan.app) UND native iOS-App
-    // (Capacitor-WKWebView läuft unter "capacitor://localhost", kein
-    // echtes Web-Origin — muss explizit erlaubt werden, sonst blockiert
-    // der Browser/WKWebView jeden fetch() aus der App an diesen Worker).
     const allowedOrigins = ["https://famiplan.app", "capacitor://localhost"];
     const requestOrigin = request.headers.get("Origin") || "";
     const corsHeaders = {
@@ -39,14 +38,12 @@ var push_worker_default = {
       return jsonResponse({ error: e.message }, 500, corsHeaders);
     }
   },
-  // ── Cron Trigger: läuft alle 5 Minuten ────────────────────
-  // Einrichten: Worker Dashboard → Triggers → Cron → */5 * * * *
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runReminderCheck(env));
   }
 };
 async function runReminderCheck(env, logs = []) {
-  const log = /* @__PURE__ */ __name2((msg) => {
+  const log = /* @__PURE__ */ __name22((msg) => {
     console.log(msg);
     logs.push(msg);
   }, "log");
@@ -82,6 +79,7 @@ async function runReminderCheck(env, logs = []) {
 }
 __name(runReminderCheck, "runReminderCheck");
 __name2(runReminderCheck, "runReminderCheck");
+__name22(runReminderCheck, "runReminderCheck");
 function getCETOffset(d) {
   const year = d.getUTCFullYear();
   const lastSunMar = new Date(Date.UTC(year, 2, 31));
@@ -94,6 +92,7 @@ function getCETOffset(d) {
 }
 __name(getCETOffset, "getCETOffset");
 __name2(getCETOffset, "getCETOffset");
+__name22(getCETOffset, "getCETOffset");
 async function checkFamilyReminders(familyId, now, nowDate, env, log = console.log) {
   const [tasksRes, subsRes] = await Promise.all([
     fetch(`${env.FIREBASE_DB_URL}/families/${familyId}/tasks.json?auth=${env.FIREBASE_SECRET}`),
@@ -161,7 +160,7 @@ async function checkFamilyReminders(familyId, now, nowDate, env, log = console.l
       };
       try {
         const pushResult = await sendPushToSubscriber(subData, notification, env);
-        log(`pushResult for ${uid}: ok=${pushResult.ok} status=${pushResult.status} text=${pushResult.text || ""} jwt=${pushResult.jwt || ""}`);
+        log(`pushResult for ${uid}: ok=${pushResult.ok} status=${pushResult.status} text=${pushResult.text || ""}`);
         if (!pushResult.ok) {
           log(`PUSH FAILED status=${pushResult.status}`);
           if (isGoneStatus(pushResult.status)) await deleteSubscription(familyId, uid, env);
@@ -234,11 +233,13 @@ async function checkFamilyReminders(familyId, now, nowDate, env, log = console.l
 }
 __name(checkFamilyReminders, "checkFamilyReminders");
 __name2(checkFamilyReminders, "checkFamilyReminders");
+__name22(checkFamilyReminders, "checkFamilyReminders");
 function localISO(d) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 __name(localISO, "localISO");
 __name2(localISO, "localISO");
+__name22(localISO, "localISO");
 function isTaskVisibleToday(task, todayISO, nowDate) {
   if (task.openTodo) return false;
   if (task.excludedDates && task.excludedDates.includes(todayISO)) return false;
@@ -283,11 +284,13 @@ function isTaskVisibleToday(task, todayISO, nowDate) {
 }
 __name(isTaskVisibleToday, "isTaskVisibleToday");
 __name2(isTaskVisibleToday, "isTaskVisibleToday");
+__name22(isTaskVisibleToday, "isTaskVisibleToday");
 function getAssignment(task, iso) {
   return task.assignments && task.assignments[iso] || { assignedTo: null, done: false };
 }
 __name(getAssignment, "getAssignment");
 __name2(getAssignment, "getAssignment");
+__name22(getAssignment, "getAssignment");
 async function handleSendPush(request, env, corsHeaders) {
   const body = await request.json();
   const { familyId, type, payload, excludeUid, targetUid } = body;
@@ -316,6 +319,7 @@ async function handleSendPush(request, env, corsHeaders) {
 }
 __name(handleSendPush, "handleSendPush");
 __name2(handleSendPush, "handleSendPush");
+__name22(handleSendPush, "handleSendPush");
 async function handleSubscribe(request, env, corsHeaders) {
   const body = await request.json();
   const { familyId, uid, memberName, subscription } = body;
@@ -337,18 +341,15 @@ async function handleSubscribe(request, env, corsHeaders) {
 }
 __name(handleSubscribe, "handleSubscribe");
 __name2(handleSubscribe, "handleSubscribe");
+__name22(handleSubscribe, "handleSubscribe");
 async function handleUnsubscribe(request, env, corsHeaders) {
   const body = await request.json();
   const { familyId, uid, target } = body;
   if (!familyId || !uid) return jsonResponse({ error: "Missing fields" }, 400, corsHeaders);
-  // "target" unterscheidet, welche Push-Variante deaktiviert wird, da Web-Push
-  // und natives FCM/iOS im selben Knoten (pushSubscriptions/{uid}) nebeneinander
-  // existieren koennen (gleicher Account in Browser UND App). Ohne "target"
-  // (alte Aufrufe) wird wie bisher der komplette Knoten geloescht.
   if (target === "web") {
     await patchSubscriptionFields(familyId, uid, { subscription: null }, env);
   } else if (target === "ios") {
-    await patchSubscriptionFields(familyId, uid, { platform: null, fcmToken: null }, env);
+    await patchSubscriptionFields(familyId, uid, { platform: null, apnsToken: null }, env);
   } else {
     await deleteSubscription(familyId, uid, env);
   }
@@ -356,6 +357,7 @@ async function handleUnsubscribe(request, env, corsHeaders) {
 }
 __name(handleUnsubscribe, "handleUnsubscribe");
 __name2(handleUnsubscribe, "handleUnsubscribe");
+__name22(handleUnsubscribe, "handleUnsubscribe");
 async function getSubscriptions(familyId, env) {
   const r = await fetch(`${env.FIREBASE_DB_URL}/families/${familyId}/pushSubscriptions.json?auth=${env.FIREBASE_SECRET}`);
   if (!r.ok) return {};
@@ -363,6 +365,7 @@ async function getSubscriptions(familyId, env) {
 }
 __name(getSubscriptions, "getSubscriptions");
 __name2(getSubscriptions, "getSubscriptions");
+__name22(getSubscriptions, "getSubscriptions");
 async function saveSubscription(familyId, uid, data, env) {
   await fetch(`${env.FIREBASE_DB_URL}/families/${familyId}/pushSubscriptions/${uid}.json?auth=${env.FIREBASE_SECRET}`, {
     method: "PUT",
@@ -371,6 +374,7 @@ async function saveSubscription(familyId, uid, data, env) {
 }
 __name(saveSubscription, "saveSubscription");
 __name2(saveSubscription, "saveSubscription");
+__name22(saveSubscription, "saveSubscription");
 async function deleteSubscription(familyId, uid, env) {
   await fetch(`${env.FIREBASE_DB_URL}/families/${familyId}/pushSubscriptions/${uid}.json?auth=${env.FIREBASE_SECRET}`, {
     method: "DELETE"
@@ -378,10 +382,8 @@ async function deleteSubscription(familyId, uid, env) {
 }
 __name(deleteSubscription, "deleteSubscription");
 __name2(deleteSubscription, "deleteSubscription");
+__name22(deleteSubscription, "deleteSubscription");
 async function patchSubscriptionFields(familyId, uid, fields, env) {
-  // PATCH statt PUT/DELETE: setzt/entfernt nur die angegebenen Felder,
-  // laesst Geschwister-Felder (z.B. das jeweils andere Push-Ziel) unberuehrt.
-  // In Firebase RTDB entfernt ein PATCH-Wert von null gezielt nur dieses Feld.
   await fetch(`${env.FIREBASE_DB_URL}/families/${familyId}/pushSubscriptions/${uid}.json?auth=${env.FIREBASE_SECRET}`, {
     method: "PATCH",
     body: JSON.stringify(fields)
@@ -389,6 +391,7 @@ async function patchSubscriptionFields(familyId, uid, fields, env) {
 }
 __name(patchSubscriptionFields, "patchSubscriptionFields");
 __name2(patchSubscriptionFields, "patchSubscriptionFields");
+__name22(patchSubscriptionFields, "patchSubscriptionFields");
 function buildNotification(type, payload) {
   switch (type) {
     case "assigned":
@@ -456,154 +459,71 @@ function buildNotification(type, payload) {
 }
 __name(buildNotification, "buildNotification");
 __name2(buildNotification, "buildNotification");
-
-// ══════════════════════════════════════════════════════════════
-// ── DISPATCHER: Web-Push (Browser/PWA) vs. FCM/APNs (native iOS) ──
-// ══════════════════════════════════════════════════════════════
+__name22(buildNotification, "buildNotification");
 function hasValidTarget(subData) {
   if (!subData) return false;
   if (subData.subscription) return true;
-  if (subData.platform === "ios" && subData.fcmToken) return true;
+  if (subData.platform === "ios" && subData.apnsToken) return true;
   return false;
 }
 __name(hasValidTarget, "hasValidTarget");
 __name2(hasValidTarget, "hasValidTarget");
-
+__name22(hasValidTarget, "hasValidTarget");
 function isGoneStatus(status) {
   return status === 410 || status === 404;
 }
 __name(isGoneStatus, "isGoneStatus");
 __name2(isGoneStatus, "isGoneStatus");
-
+__name22(isGoneStatus, "isGoneStatus");
 async function sendPushToSubscriber(subData, notification, env) {
-  if (subData.platform === "ios" && subData.fcmToken) {
-    return await sendFcmPush(subData.fcmToken, notification, env);
+  if (subData.platform === "ios" && subData.apnsToken) {
+    return await sendApnsPush(subData.apnsToken, notification, env);
   }
   return await sendWebPush(subData.subscription, notification, env);
 }
 __name(sendPushToSubscriber, "sendPushToSubscriber");
 __name2(sendPushToSubscriber, "sendPushToSubscriber");
-
-// ══════════════════════════════════════════════════════════════
-// ── FCM (Firebase Cloud Messaging) für native iOS-App ──────────
-// Nutzt einen Firebase-Service-Account (env.FIREBASE_SERVICE_ACCOUNT,
-// als JSON-String-Secret hinterlegt) für OAuth2 + FCM HTTP v1 API.
-// FCM kümmert sich intern um die Zustellung via APNs.
-// ══════════════════════════════════════════════════════════════
-let _fcmTokenCache = null;
-async function getGoogleAccessToken(env) {
-  const now = Math.floor(Date.now() / 1e3);
-  if (_fcmTokenCache && _fcmTokenCache.exp > now + 60) {
-    return _fcmTokenCache.token;
-  }
-  const sa = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT);
-  const iat = now;
-  const exp = now + 3600;
-  const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claims = base64UrlEncode(JSON.stringify({
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/firebase.messaging",
-    aud: "https://oauth2.googleapis.com/token",
-    iat,
-    exp
-  }));
-  const signInput = `${header}.${claims}`;
-  const privateKey = await importPkcs8PrivateKey(sa.private_key);
-  const sigBuf = await crypto.subtle.sign(
-    { name: "RSASSA-PKCS1-v1_5" },
-    privateKey,
-    new TextEncoder().encode(signInput)
-  );
-  const jwt = `${signInput}.${base64UrlEncode(new Uint8Array(sigBuf))}`;
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: jwt
-    })
+__name22(sendPushToSubscriber, "sendPushToSubscriber");
+var _apnsClient = null;
+function getApnsClient(env) {
+  if (_apnsClient) return _apnsClient;
+  _apnsClient = new ApnsClient({
+    team: env.APNS_TEAM_ID,
+    keyId: env.APNS_KEY_ID,
+    signingKey: env.APNS_SIGNING_KEY,
+    defaultTopic: env.APNS_BUNDLE_ID
   });
-  const tokenData = await tokenRes.json();
-  if (!tokenRes.ok || !tokenData.access_token) {
-    throw new Error(`Google OAuth2 token error: ${JSON.stringify(tokenData)}`);
-  }
-  _fcmTokenCache = { token: tokenData.access_token, exp: now + (tokenData.expires_in || 3600) };
-  return tokenData.access_token;
+  return _apnsClient;
 }
-__name(getGoogleAccessToken, "getGoogleAccessToken");
-__name2(getGoogleAccessToken, "getGoogleAccessToken");
-
-async function importPkcs8PrivateKey(pem) {
-  const clean = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s/g, "");
-  const binary = atob(clean);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return await crypto.subtle.importKey(
-    "pkcs8",
-    bytes.buffer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-}
-__name(importPkcs8PrivateKey, "importPkcs8PrivateKey");
-__name2(importPkcs8PrivateKey, "importPkcs8PrivateKey");
-
-async function sendFcmPush(fcmToken, notification, env) {
-  let accessToken, projectId;
-  try {
-    accessToken = await getGoogleAccessToken(env);
-    projectId = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT).project_id;
-  } catch (e) {
-    return { ok: false, status: 500, text: `OAuth error: ${e.message}` };
-  }
+__name(getApnsClient, "getApnsClient");
+__name2(getApnsClient, "getApnsClient");
+__name22(getApnsClient, "getApnsClient");
+async function sendApnsPush(apnsToken, notification, env) {
   const data = {};
   if (notification.data) {
     for (const [k, v] of Object.entries(notification.data)) {
       data[k] = String(v ?? "");
     }
   }
-  const message = {
-    message: {
-      token: fcmToken,
-      notification: {
-        title: notification.title,
-        body: notification.body
-      },
-      data,
-      apns: {
-        payload: {
-          aps: { sound: "default" }
-        }
-      }
-    }
-  };
-  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(message)
-  });
-  let text = "";
-  let errStatus = null;
-  if (!res.ok) {
-    try {
-      const errJson = await res.json();
-      text = JSON.stringify(errJson).slice(0, 200);
-      errStatus = errJson?.error?.status || null;
-    } catch {
-      try { text = (await res.text()).slice(0, 200); } catch {}
-    }
+  try {
+    const client = getApnsClient(env);
+    const n = new ApnsNotification(apnsToken, {
+      alert: { title: notification.title, body: notification.body || "" },
+      sound: "default",
+      data
+    });
+    await client.send(n);
+    return { ok: true, status: 200, text: "" };
+  } catch (e) {
+    const status = e?.statusCode || e?.status || 500;
+    const reason = e?.reason || e?.message || "unknown";
+    const notRegistered = status === 410 || reason === "Unregistered" || reason === "BadDeviceToken" || reason === "DeviceTokenNotForTopic";
+    return { ok: false, status: notRegistered ? 404 : status, text: String(reason).slice(0, 200) };
   }
-  // FCM meldet ungültige/abgelaufene Tokens als NOT_FOUND oder UNREGISTERED
-  const treatAsGone = errStatus === "NOT_FOUND" || errStatus === "UNREGISTERED" || res.status === 404;
-  return { ok: res.ok, status: treatAsGone ? 404 : res.status, text };
 }
-__name(sendFcmPush, "sendFcmPush");
-__name2(sendFcmPush, "sendFcmPush");
-
+__name(sendApnsPush, "sendApnsPush");
+__name2(sendApnsPush, "sendApnsPush");
+__name22(sendApnsPush, "sendApnsPush");
 async function sendWebPush(subscription, notification, env) {
   const { endpoint, keys } = subscription;
   const { p256dh, auth } = keys;
@@ -629,6 +549,7 @@ async function sendWebPush(subscription, notification, env) {
 }
 __name(sendWebPush, "sendWebPush");
 __name2(sendWebPush, "sendWebPush");
+__name22(sendWebPush, "sendWebPush");
 async function encryptPayload(plaintext, p256dhBase64, authBase64) {
   const encoder = new TextEncoder();
   const p256dh = base64UrlDecode(p256dhBase64);
@@ -655,6 +576,7 @@ async function encryptPayload(plaintext, p256dhBase64, authBase64) {
 }
 __name(encryptPayload, "encryptPayload");
 __name2(encryptPayload, "encryptPayload");
+__name22(encryptPayload, "encryptPayload");
 async function hkdf(salt, ikm, info, length) {
   const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
   const bits = await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, length * 8);
@@ -662,6 +584,7 @@ async function hkdf(salt, ikm, info, length) {
 }
 __name(hkdf, "hkdf");
 __name2(hkdf, "hkdf");
+__name22(hkdf, "hkdf");
 async function buildVapidHeaders(endpoint, publicKeyBase64, privateKeyBase64, subject, jwtCallback) {
   const origin = new URL(endpoint).origin;
   const now = Math.floor(Date.now() / 1e3);
@@ -705,12 +628,12 @@ async function buildVapidHeaders(endpoint, publicKeyBase64, privateKeyBase64, su
     rawSig = sigBytes;
   }
   const jwt = `${sigInput}.${base64UrlEncode(rawSig)}`;
-  console.log("jwt_header_b64:", header, "rawSig_len:", rawSig.length, "sigBytes0:", sigBytes[0]);
   if (jwtCallback) jwtCallback(jwt);
   return { "Authorization": `vapid t=${jwt},k=${publicKeyBase64}` };
 }
 __name(buildVapidHeaders, "buildVapidHeaders");
 __name2(buildVapidHeaders, "buildVapidHeaders");
+__name22(buildVapidHeaders, "buildVapidHeaders");
 function base64UrlDecode(str) {
   const padded = str.replace(/-/g, "+").replace(/_/g, "/");
   const padLen = (4 - padded.length % 4) % 4;
@@ -720,6 +643,7 @@ function base64UrlDecode(str) {
 }
 __name(base64UrlDecode, "base64UrlDecode");
 __name2(base64UrlDecode, "base64UrlDecode");
+__name22(base64UrlDecode, "base64UrlDecode");
 function base64UrlEncode(input) {
   let bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
   let binary = "";
@@ -728,6 +652,7 @@ function base64UrlEncode(input) {
 }
 __name(base64UrlEncode, "base64UrlEncode");
 __name2(base64UrlEncode, "base64UrlEncode");
+__name22(base64UrlEncode, "base64UrlEncode");
 function concat(...arrays) {
   const total = arrays.reduce((sum, a) => sum + a.length, 0);
   const result = new Uint8Array(total);
@@ -740,11 +665,13 @@ function concat(...arrays) {
 }
 __name(concat, "concat");
 __name2(concat, "concat");
+__name22(concat, "concat");
 function jsonResponse(data, status, corsHeaders) {
   return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 __name(jsonResponse, "jsonResponse");
 __name2(jsonResponse, "jsonResponse");
+__name22(jsonResponse, "jsonResponse");
 export {
   push_worker_default as default
 };

@@ -1,18 +1,18 @@
 // ══════════════════════════════════════════════════════════════
 // famiplan – nativePush.js
 // Native Push-Benachrichtigungen für die iOS-App (App Store/TestFlight)
-// via Firebase Cloud Messaging (FCM) + APNs.
+// via APNs (direkt, ohne Firebase/FCM).
 //
 // WARUM EIN EIGENES MODUL: Die reguläre Web-Push-API
 // (Notification.requestPermission / PushManager, siehe ui/push.js)
 // funktioniert NICHT innerhalb der Capacitor-WKWebView einer nativen
 // App — das ist eine Plattform-Einschränkung von Apple, kein Bug.
-// Native Apps brauchen einen echten APNs/FCM-Token statt einer
+// Native Apps brauchen einen echten APNs-Device-Token statt einer
 // Web-Push-Subscription.
 //
-// @capacitor-firebase/messaging wird dynamisch importiert, damit die
-// Web-/PWA-Version (Cloudflare Pages) keine Firebase-SDK-Mehrlast
-// bekommt, wenn sie nie im nativen Kontext läuft.
+// @capacitor/push-notifications wird dynamisch importiert, damit die
+// Web-/PWA-Version (Cloudflare Pages) keine native Mehrlast bekommt,
+// wenn sie nie im nativen Kontext läuft.
 // ══════════════════════════════════════════════════════════════
 
 import { state } from './state.js';
@@ -20,9 +20,6 @@ import { fbFetch, getAuthToken } from './firebase.js';
 import { DB_ROOT, PUSH_WORKER_URL } from './config.js';
 
 // ── SETTINGS HELPER ─────────────────────────────────────────────
-// Bewusst dupliziert (statt aus ui/push.js importiert), um einen
-// zirkulären Modul-Import zwischen ui/push.js <-> modules/nativePush.js
-// zu vermeiden. Nutzt denselben localStorage-Key wie ui/push.js.
 function getPushSetting(key, def) {
   try {
     const s = JSON.parse(localStorage.getItem('fp_push_settings') || '{}');
@@ -43,55 +40,61 @@ export function isNativePlatform() {
 }
 
 // ── AKTIVIEREN: Berechtigung anfragen + Token registrieren ───────
+// Der APNs-Device-Token kommt asynchron über das 'registration'-Event,
+// nicht als Rückgabewert von register(). Daher Listener-basiert mit
+// Timeout als Absicherung.
 export async function enableNativePush() {
-  const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-  const perm = await FirebaseMessaging.requestPermissions();
+  const { PushNotifications } = await import('@capacitor/push-notifications');
+  const perm = await PushNotifications.requestPermissions();
   if (perm.receive !== 'granted') {
     return { ok: false, reason: 'denied' };
   }
 
-  // WICHTIG: Der APNs-Gerätetoken wird von Apple asynchron im Hintergrund
-  // zugewiesen (UIApplication.registerForRemoteNotifications()-Callback).
-  // Ein sofortiger getToken()-Aufruf direkt nach requestPermissions() kann
-  // dieser Zuweisung zuvorkommen und mit "No APNS token specified before
-  // fetching FCM Token" fehlschlagen. Daher mit kurzen Pausen wiederholen.
-  const delays = [0, 500, 1000, 1500, 2000, 3000]; // insgesamt ~8s
-  let lastError = null;
-  for (const delay of delays) {
-    if (delay) await new Promise(r => setTimeout(r, delay));
-    try {
-      const { token } = await FirebaseMessaging.getToken();
-      if (token) {
-        // WICHTIG: Erfolg des Firebase-Writes prüfen, nicht nur den
-        // FCM-Token-Abruf. Ein Token ohne gespeicherten DB-Eintrag
-        // bedeutet: die App zeigt "Aktiv", aber es kommt nie ein Push an.
-        const saved = await saveNativeTokenToServer(token);
-        if (!saved) {
-          return { ok: false, reason: 'save-failed' };
-        }
-        setPushSetting('enabled', true);
-        return { ok: true };
+  return new Promise((resolve) => {
+    let settled = false;
+
+    const finish = async (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      await PushNotifications.removeAllListeners();
+      resolve(result);
+    };
+
+    const timeout = setTimeout(() => finish({ ok: false, reason: 'no-token' }), 8000);
+
+    PushNotifications.addListener('registration', async (token) => {
+      if (!token?.value) return;
+      const saved = await saveNativeTokenToServer(token.value);
+      if (!saved) {
+        finish({ ok: false, reason: 'save-failed' });
+        return;
       }
-    } catch (e) {
-      lastError = e;
-    }
-  }
-  console.warn('enableNativePush: kein Token nach mehreren Versuchen:', lastError?.message);
-  return { ok: false, reason: 'no-token' };
+      setPushSetting('enabled', true);
+      finish({ ok: true });
+    });
+
+    PushNotifications.addListener('registrationError', (err) => {
+      console.warn('enableNativePush registrationError:', err?.error || err);
+      finish({ ok: false, reason: 'no-token' });
+    });
+
+    PushNotifications.register();
+  });
 }
 
 // ── DEAKTIVIEREN ──────────────────────────────────────────────────
 export async function disableNativePush() {
   try {
-    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-    await FirebaseMessaging.deleteToken();
-  } catch (e) { console.warn('disableNativePush deleteToken:', e.message); }
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    await PushNotifications.removeAllListeners();
+    // Anders als FCM kennt APNs kein serverseitiges "deleteToken" –
+    // Deaktivierung bedeutet hier: Server-Eintrag löschen.
+  } catch (e) { console.warn('disableNativePush:', e.message); }
 
   const { currentAuthUser, familyId } = state;
   if (currentAuthUser && familyId) {
     try {
-      // target:'ios' → Worker löscht nur platform/fcmToken, nicht eine
-      // evtl. parallele Web-Push-Subscription desselben Accounts.
       const token = await getAuthToken().catch(() => null);
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -107,15 +110,15 @@ export async function disableNativePush() {
 
 // ── TOKEN AN FIREBASE SENDEN ────────────────────────────────────
 // Gleicher Pfad wie die Web-Push-Subscription (families/{familyId}/
-// pushSubscriptions/{uid}), aber mit platform:'ios' + fcmToken statt
+// pushSubscriptions/{uid}), aber mit platform:'ios' + apnsToken statt
 // einer Web-Push-"subscription". push-worker.js unterscheidet danach,
-// ob per Web-Push oder per FCM/APNs gesendet wird.
+// ob per Web-Push oder direkt per APNs gesendet wird.
 async function saveNativeTokenToServer(token) {
   const { currentAuthUser, familyId, curUser } = state;
   if (!currentAuthUser || !familyId) return false;
   const data = {
     platform:        'ios',
-    fcmToken:        token,
+    apnsToken:       token,
     memberName:      curUser || '',
     reminderMinutes: getPushSetting('reminderMinutes', 30),
     reminderEnabled: getPushSetting('reminderEnabled', true),
@@ -123,8 +126,6 @@ async function saveNativeTokenToServer(token) {
     dailyHour:       getPushSetting('dailyHour', 7),
     updatedAt:       Date.now(),
   };
-  // PATCH statt PUT: nur diese Felder setzen, ohne eine evtl. parallel
-  // aktive Web-Push-Subscription (gleicher Account im Browser) zu löschen.
   try {
     const res = await fbFetch(`${DB_ROOT}/families/${familyId}/pushSubscriptions/${currentAuthUser.uid}.json`, {
       method: 'PATCH',
@@ -143,16 +144,19 @@ async function saveNativeTokenToServer(token) {
 }
 
 // ── TOKEN-REFRESH ─────────────────────────────────────────────────
-// FCM-Tokens können sich gelegentlich ändern (Neuinstallation,
-// Keychain-Reset etc.). Bei bereits aktivem Push automatisch
-// aktualisieren, damit der gespeicherte Token nicht veraltet.
+// Bei bereits aktivem Push erneut registrieren, um einen evtl.
+// rotierten APNs-Token automatisch zu aktualisieren.
 export async function initNativePushListeners() {
   if (!isNativePlatform()) return;
   if (!getPushSetting('enabled', false)) return;
   try {
-    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-    FirebaseMessaging.addListener('tokenReceived', (event) => {
-      if (event?.token) saveNativeTokenToServer(event.token).catch(() => {});
+    const { PushNotifications } = await import('@capacitor/push-notifications');
+    PushNotifications.addListener('registration', (token) => {
+      if (token?.value) saveNativeTokenToServer(token.value).catch(() => {});
     });
+    const perm = await PushNotifications.checkPermissions();
+    if (perm.receive === 'granted') {
+      PushNotifications.register();
+    }
   } catch (e) { console.warn('initNativePushListeners:', e.message); }
 }
