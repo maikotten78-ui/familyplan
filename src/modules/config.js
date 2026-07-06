@@ -28,7 +28,7 @@ export const ADMIN_UIDS = [
 // GLOBALER SCHALTER: bleibt false bis Maik das Feature aktiv freigibt.
 // Solange false: kein UI-Einstiegspunkt sichtbar, kein Capacitor-Calendar-
 // Code wird ausgeführt (nur dynamisch importiert, siehe calendarSync.js).
-export const CALENDAR_SYNC_ENABLED = false;
+export const CALENDAR_SYNC_ENABLED = true;
 // Konfliktauflösung bei gleichzeitiger Änderung auf beiden Seiten.
 // 'newer' = der Eintrag mit dem späteren updatedAt/lastModified gewinnt.
 export const CALENDAR_SYNC_CONFLICT_STRATEGY = 'newer';
