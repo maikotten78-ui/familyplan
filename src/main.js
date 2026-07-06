@@ -1163,6 +1163,15 @@ function appInit() {
 
     const _showAddMember = (isFirst) => showAddMemberModal(isFirst, openModal, closeModal, showSync, showUserModal);
 
+    // Aktualisiert zeitabhaengige Anzeigen (z.B. "naechste Aufgabe in X Min."
+    // im Home-Tab), die sonst nur bei echten Datenaenderungen neu gerendert
+    // wuerden und bis zum naechsten App-Neustart eingefroren blieben.
+    if (!window._clockTickId) {
+      window._clockTickId = setInterval(() => {
+        if (state.tab === 'overview') renderContent();
+      }, 30000);
+    }
+
     const loadAll = () => {
       subscribeToTasks(renderContent, loadComments);
       loadShopping(renderContent);
