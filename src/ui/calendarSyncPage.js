@@ -37,7 +37,7 @@ export function showCalendarSyncPage() {
   const lastSync = getLastSyncTime();
 
   const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#5C4EE5' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
-  const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block"></span>`;
+  const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block;pointer-events:none"></span>`;
 
   overlay.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">

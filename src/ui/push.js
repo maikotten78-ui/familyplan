@@ -223,7 +223,7 @@ export function showPushPage() {
   const remEnabled    = getPushSetting('reminderEnabled', true);
 
   const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#5C4EE5' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
-  const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block"></span>`;
+  const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block;pointer-events:none"></span>`;
   const row = (id, title, sub, key, def) => `
     <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border2,#F5F6FA)">
       <div><div style="font-size:13px;font-weight:600;color:var(--text1)">${title}</div><div style="font-size:11px;color:var(--text2)">${sub}</div></div>
