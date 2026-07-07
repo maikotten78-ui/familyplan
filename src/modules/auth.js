@@ -39,12 +39,26 @@ export async function initFirebaseAuth(onSuccess, onFailure) {
       onFailure();
     }, 6000);
 
+    // WICHTIG: onAuthStateChanged kann fuer denselben Nutzer MEHRFACH
+    // feuern (typischerweise kurz nach einer Registrierung durch einen
+    // internen Firebase-Token-Refresh) - auch waehrend der Nutzer noch
+    // mitten im Onboarding sitzt (z.B. auf der "Alles bereit!"-Seite).
+    // Ein erneuter onSuccess()/proceedAfterAuth()-Lauf wuerde dann den
+    // Family-Screen faelschlich ausblenden und direkt in die App springen,
+    // obwohl der Nutzer den Ablauf noch gar nicht abgeschlossen hat (z.B.
+    // "Los geht's" noch nicht angetippt). Deshalb nur bei echtem
+    // UID-Wechsel (oder dem allerersten Aufruf) den vollen Ablauf ausloesen.
+    let lastProcessedUid = null;
+
     auth.onAuthStateChanged(user => {
       clearTimeout(authTimeout);
       setState({ currentAuthUser: user });
       if (user) {
         hideAuthScreen();
-        onSuccess();
+        if (user.uid !== lastProcessedUid) {
+          lastProcessedUid = user.uid;
+          onSuccess();
+        }
         // Token proaktiv alle 50 Minuten erneuern (läuft alle 60 Min ab)
         if (window._tokenRefreshInterval) clearInterval(window._tokenRefreshInterval);
         window._tokenRefreshInterval = setInterval(async () => {
@@ -56,6 +70,7 @@ export async function initFirebaseAuth(onSuccess, onFailure) {
           } catch (e) { console.warn('Token refresh failed:', e.message); }
         }, 50 * 60 * 1000); // alle 50 Minuten
       } else {
+        lastProcessedUid = null;
         if (window._tokenRefreshInterval) {
           clearInterval(window._tokenRefreshInterval);
           window._tokenRefreshInterval = null;
