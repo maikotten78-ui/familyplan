@@ -2,7 +2,7 @@
 // famiplan – main.js  (Phase 4 Entry Point)
 // ══════════════════════════════════════════════════════════════
 
-import { PREMIUM_ENABLED } from './modules/config.js';
+import { PREMIUM_ENABLED, APP_STORE_URL } from './modules/config.js';
 import { state, setState } from './modules/state.js';
 import { syncPublicFamily, ensureFamilyInIndex } from './modules/firebase.js';
 import { clearFamilyCache } from './modules/cache.js';
@@ -92,6 +92,18 @@ import { preloadSchulferien, setBundesland, BUNDESLAENDER } from './modules/holi
       const joinToken = (params.get('token') || '').trim();
       if (joinToken) sessionStorage.setItem('fp_pending_join_token', joinToken);
       window.history.replaceState({}, '', window.location.pathname);
+
+      // iPhone/iPad-Nutzer im Browser (NICHT die native App selbst, die
+      // laeuft ja bereits) auf den App Store schicken, sobald die App dort
+      // gelistet ist (APP_STORE_URL gesetzt, siehe config.js). Solange
+      // APP_STORE_URL null ist, passiert hier nichts und es geht wie bisher
+      // zur Web-App weiter - kein Verhaltensunterschied vor Store-Launch.
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      let isNative = false;
+      try { isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) { /* kein Capacitor -> Web */ }
+      if (isIOS && !isNative && APP_STORE_URL) {
+        window.location.href = APP_STORE_URL;
+      }
     }
   } catch (e) { /* sessionStorage evtl. nicht verfügbar, kein Problem */ }
 })();

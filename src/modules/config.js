@@ -36,6 +36,13 @@ export const CALENDAR_SYNC_CONFLICT_STRATEGY = 'newer';
 // (visibleTo === 'all' || curUser enthalten) – keine fremden privaten Termine.
 export const CALENDAR_SYNC_RESPECT_VISIBILITY = true;
 
+// ── APP STORE (iOS) ─────────────────────────────────────────
+// Sobald famiplan im App Store gelistet ist: hier die App-Store-URL
+// eintragen (z.B. 'https://apps.apple.com/app/idXXXXXXXXXX'). Solange
+// null: Einladungslinks fuehren auf allen Geraeten weiterhin zur Web-App
+// (siehe captureInviteLinkIntent() in main.js).
+export const APP_STORE_URL = null;
+
 // ── LEMON SQUEEZY ────────────────────────────────────────────
 export const LS_CHECKOUT = {
   monthly: 'https://famiplan.lemonsqueezy.com/checkout/buy/fdce8540-8258-45c1-9305-d6bbd5cb6c23',
