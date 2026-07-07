@@ -60,6 +60,15 @@ export function genFamilyId() {
   return Array.from(arr).map(b => chars[b % chars.length]).join('');
 }
 
+// Einladungs-Token: deutlich laenger als die Familien-ID, einmalig nutzbar
+// und zeitlich begrenzt (siehe shareInviteLink / obJoinFamily).
+export function genInviteToken() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const arr   = new Uint8Array(24);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => chars[b % chars.length]).join('');
+}
+
 // ── DURATION HELPERS ─────────────────────────────────────────
 export function calcDurMins(start, end) {
   if (!start || !end) return 0;

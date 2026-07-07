@@ -5,7 +5,7 @@
 
 import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
-import { localISO, jd2i, dayFromISO, genFamilyId } from '../modules/utils.js';
+import { localISO, jd2i, dayFromISO, genFamilyId, genInviteToken } from '../modules/utils.js';
 import { fbFetch, fbSet, syncPublicFamily } from '../modules/firebase.js';
 import { saveMember } from '../modules/members.js';
 import { saveUserFamily, hideAuthScreen } from '../modules/auth.js';
@@ -128,7 +128,46 @@ export async function obJoinFamily() {
   // Rate-Limiting gegen automatisiertes Durchprobieren von Familien-IDs
   if (!await checkRateLimit('familyJoin')) { if (errEl) errEl.textContent = ''; return; }
 
+  const token = sessionStorage.getItem('fp_pending_join_token') || '';
+
   try {
+    if (token) {
+      // ── EINLADUNGS-TOKEN-WEG (empfohlen) ─────────────────────
+      // Token pruefen, dann ZUERST atomar als verbraucht markieren
+      // (verhindert Mehrfachnutzung bei gleichzeitigen Versuchen),
+      // erst NACH erfolgreicher Markierung wird Zugriff gewaehrt.
+      const tr = await fbFetch(`${DB_ROOT}/families/${id}/invites/${token}.json`);
+      if (!tr.ok) { if (errEl) errEl.textContent = 'Einladung ungültig oder abgelaufen.'; return; }
+      const invite = await tr.json();
+      if (!invite || invite.usedBy || !invite.expiresAt || invite.expiresAt < Date.now()) {
+        if (errEl) errEl.textContent = 'Einladung ungültig, bereits verwendet oder abgelaufen.'; return;
+      }
+
+      const consumeRes = await fbFetch(`${DB_ROOT}/families/${id}/invites/${token}.json`, {
+        method: 'PATCH',
+        body: JSON.stringify({ usedBy: state.currentAuthUser?.uid || 'pending', usedAt: Date.now() }),
+      });
+      if (!consumeRes.ok) {
+        if (errEl) errEl.textContent = 'Einladung wurde inzwischen bereits verwendet.'; return;
+      }
+      sessionStorage.removeItem('fp_pending_join_token');
+
+      const mr   = await fbFetch(`${DB_ROOT}/families/${id}/meta.json`);
+      const meta = mr.ok ? await mr.json() : null;
+      const name = (meta && meta.name) || id;
+
+      setState({ familyId: id, familyName: name });
+      localStorage.setItem('fp_family_id',   id);
+      localStorage.setItem('fp_family_name', name);
+      localStorage.setItem('fp_family_role', 'member');
+      window.history.replaceState({}, '', window.location.pathname);
+      await saveUserFamily();
+      if (errEl) errEl.textContent = '';
+      obGoTo(5);
+      return;
+    }
+
+    // ── FALLBACK: manuelle Familien-ID ohne Einladungs-Token ────
     // Familie erst prüfen, DANN State setzen und speichern.
     // WICHTIG: response.ok wird geprüft — eine von den Firebase-Regeln
     // abgelehnte Anfrage (z.B. Status 401) darf NICHT als "Familie
@@ -230,19 +269,38 @@ export function obFinish() {
 }
 
 // ── SHARE INVITE LINK (from user modal) ──────────────────────
-export function shareInviteLink() {
+export async function shareInviteLink() {
   closeModal();
-  const { familyId, familyName } = state;
+  const { familyId, familyName, curUser } = state;
   if (!familyId) return;
-  const url  = `${location.origin}/join.html?id=${familyId}&name=${encodeURIComponent(familyName)}`;
-  const text = `Hey! 👋 Ich nutze famiplan für unsere Familienplanung – Aufgaben, Termine & Einkauf auf einen Blick.\n\nTritt hier bei: ${url}`;
+
+  // Einmalig nutzbares, 7 Tage gültiges Einladungs-Token statt der
+  // dauerhaften Familien-ID – die Familien-ID allein bleibt zwar als
+  // Fallback (manuelle Eingabe) nutzbar, aber der geteilte Link ist
+  // jetzt nicht mehr auf unbegrenzte Zeit gültig und nicht mehrfach
+  // verwendbar.
+  const token = genInviteToken();
+  const now = Date.now();
+  const EXPIRES_MS = 7 * 24 * 60 * 60 * 1000; // 7 Tage
+  try {
+    await fbFetch(`${DB_ROOT}/families/${familyId}/invites/${token}.json`, {
+      method: 'PUT',
+      body: JSON.stringify({ createdBy: curUser || '', createdAt: now, expiresAt: now + EXPIRES_MS }),
+    });
+  } catch (e) {
+    showSync('Fehler beim Erstellen der Einladung. Bitte erneut versuchen.');
+    return;
+  }
+
+  const url  = `${location.origin}/join.html?id=${familyId}&token=${token}&name=${encodeURIComponent(familyName)}`;
+  const text = `Hey! 👋 Ich nutze famiplan für unsere Familienplanung – Aufgaben, Termine & Einkauf auf einen Blick.\n\nTritt hier bei (Link ist 7 Tage gültig): ${url}`;
 
   if (navigator.share) { navigator.share({ title: 'famiplan – Familieneinladung', text, url }).catch(() => {}); return; }
 
   openModal(`
     <div class="modal-handle"></div>
     <div class="modal-title">🔗 Familie einladen</div>
-    <div class="modal-sub">Teile diesen Link mit deiner Familie</div>
+    <div class="modal-sub">Teile diesen Link mit deiner Familie – gültig für 7 Tage, einmalig nutzbar</div>
     <div style="background:#F5F3FF;border-radius:12px;padding:12px 14px;margin-bottom:16px;word-break:break-all;font-size:12px;color:#5C4EE5;font-weight:600;border:1px solid #EDE9FE">${url}</div>
     <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank"
       style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#25D366;color:white;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;margin-bottom:10px">

@@ -87,6 +87,8 @@ import { preloadSchulferien, setBundesland, BUNDESLAENDER } from './modules/holi
       sessionStorage.setItem('fp_pending_join_id', joinId);
       const joinName = params.get('name') || '';
       if (joinName) sessionStorage.setItem('fp_pending_join_name', joinName);
+      const joinToken = (params.get('token') || '').trim();
+      if (joinToken) sessionStorage.setItem('fp_pending_join_token', joinToken);
       window.history.replaceState({}, '', window.location.pathname);
     }
   } catch (e) { /* sessionStorage evtl. nicht verfügbar, kein Problem */ }
