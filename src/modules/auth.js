@@ -313,7 +313,7 @@ export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
   if (authEl)   { authEl.style.transition = 'opacity 0.3s'; authEl.style.opacity = '0'; setTimeout(() => authEl.style.display = 'none', 300); }
   if (familyEl) familyEl.style.display = 'none';
 
-  if (state.familyId) setTimeout(() => import('./firebase.js').then(m => m.ensureFamilyInIndex()), 2000);
+  if (state.familyId) setTimeout(() => import('./firebase.js').then(m => { m.ensureFamilyInIndex(); m.syncPublicFamily(); }), 2000);
   appInit();
 }
 

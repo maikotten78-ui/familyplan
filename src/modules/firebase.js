@@ -77,12 +77,15 @@ export function loadScript(src) {
 }
 
 // ── PUBLIC FAMILY SYNC ────────────────────────────────────────
+// Schreibt bewusst NUR den Familiennamen — dieser Pfad ist unauthentifiziert
+// lesbar (dient der Vorschau auf dem Einladungs-Link, bevor sich jemand
+// anmeldet). Mitgliedernamen gehören NICHT hierher, da sie sonst für
+// jeden mit Kenntnis der Familien-ID ohne Anmeldung einsehbar wären.
 export async function syncPublicFamily() {
-  const { familyId, familyName, members, av } = state;
+  const { familyId, familyName } = state;
   if (!familyId || familyId === 'DEMO01') return;
   try {
-    const pub = { name: familyName || familyId, members: {} };
-    members.forEach(m => { pub.members[m] = { emoji: av[m] || '👤' }; });
+    const pub = { name: familyName || familyId };
     await fbFetch(`${DB_ROOT}/public/${familyId}.json`, {
       method: 'PUT',
       body: JSON.stringify(pub),

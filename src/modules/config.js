@@ -89,4 +89,4 @@ export const MEAL_EMOJIS = [
 export const BOARD_REACTIONS = ['👍','❤️','😂','😮','🙌'];
 
 // ── RATE LIMITS ──────────────────────────────────────────────
-export const RL_LIMITS = { task: 20, comment: 30, shop: 50, member: 10, board: 20 };
+export const RL_LIMITS = { task: 20, comment: 30, shop: 50, member: 10, board: 20, familyJoin: 8 };

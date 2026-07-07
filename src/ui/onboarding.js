@@ -125,9 +125,18 @@ export async function obJoinFamily() {
   if (!id || id.length < 6) { if (errEl) errEl.textContent = 'Bitte eine gültige Familien-ID eingeben'; return; }
   if (errEl) errEl.textContent = 'Wird gesucht…';
 
+  // Rate-Limiting gegen automatisiertes Durchprobieren von Familien-IDs
+  if (!await checkRateLimit('familyJoin')) { if (errEl) errEl.textContent = ''; return; }
+
   try {
-    // Familie erst prüfen, DANN State setzen und speichern
-    const r    = await fbFetch(`${DB_ROOT}/families/${id}/meta.json`);
+    // Familie erst prüfen, DANN State setzen und speichern.
+    // WICHTIG: response.ok wird geprüft — eine von den Firebase-Regeln
+    // abgelehnte Anfrage (z.B. Status 401) darf NICHT als "Familie
+    // gefunden" durchgehen, auch wenn ein JSON-Body zurückkommt.
+    const r = await fbFetch(`${DB_ROOT}/families/${id}/meta.json`);
+    if (!r.ok) {
+      if (errEl) errEl.textContent = 'Familie nicht gefunden. ID prüfen.'; return;
+    }
     const meta = await r.json();
     if (!meta) {
       if (errEl) errEl.textContent = 'Familie nicht gefunden. ID prüfen.'; return;

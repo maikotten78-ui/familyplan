@@ -74,6 +74,24 @@ import { showAddModal, showEditModal, showMealEditModal, showUserModal, showBoar
 
 import { preloadSchulferien, setBundesland, BUNDESLAENDER } from './modules/holidays.js';
 
+// ── EINLADUNGS-LINK ERKENNEN (?id=...&name=...) ────────────────
+// Läuft so früh wie möglich beim Laden, bevor irgend ein anderer Code
+// die URL bereinigt. Merkt sich die Absicht einmalig in sessionStorage,
+// appInit() konsumiert das danach (siehe unten), egal ob vorher noch
+// eine Anmeldung nötig ist.
+(function captureInviteLinkIntent() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const joinId = (params.get('id') || '').trim().toUpperCase();
+    if (joinId && joinId.length >= 6) {
+      sessionStorage.setItem('fp_pending_join_id', joinId);
+      const joinName = params.get('name') || '';
+      if (joinName) sessionStorage.setItem('fp_pending_join_name', joinName);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  } catch (e) { /* sessionStorage evtl. nicht verfügbar, kein Problem */ }
+})();
+
 // ── DARK MODE ─────────────────────────────────────────────────
 function applyDarkMode() {
   const pref = localStorage.getItem('fp_dark_mode') || 'system';
@@ -1153,6 +1171,22 @@ function appInit() {
   const savedUser = localStorage.getItem('fp_user');
   if (!state.familyId) {
     showFamilySetup();
+    const pendingJoinId = sessionStorage.getItem('fp_pending_join_id');
+    if (pendingJoinId) {
+      sessionStorage.removeItem('fp_pending_join_id');
+      const pendingJoinName = sessionStorage.getItem('fp_pending_join_name') || '';
+      sessionStorage.removeItem('fp_pending_join_name');
+      setTimeout(() => {
+        obGoTo(4);
+        const idInput = document.getElementById('ob-join-id');
+        if (idInput) idInput.value = pendingJoinId;
+        const errEl = document.getElementById('ob-join-err');
+        if (errEl && pendingJoinName) {
+          errEl.style.color = 'var(--text3)';
+          errEl.textContent = `Einladung von: ${pendingJoinName}`;
+        }
+      }, 300);
+    }
   } else {
     const fib = document.getElementById('family-info-bar');
     const fnd = document.getElementById('family-name-display');
