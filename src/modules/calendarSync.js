@@ -58,6 +58,15 @@ export function setCalendarSyncOptIn(on) {
 // ── LAZY PLUGIN LOADER ─────────────────────────────────────────
 let _pluginPromise = null;
 function loadCalendarPlugin() {
+  // Bevorzugt: bereits nativ registriertes Plugin direkt über die
+  // globale Capacitor-Bridge holen (funktioniert zuverlässig in der
+  // installierten App). Der dynamische ES-Import via import() blieb in
+  // der Praxis unaufgelöst haengen und blockierte damit dauerhaft jeden
+  // Aufruf, da das Ergebnis in _pluginPromise gecacht wird.
+  if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorCalendar) {
+    _pluginPromise = Promise.resolve(window.Capacitor.Plugins.CapacitorCalendar);
+    return _pluginPromise;
+  }
   if (!_pluginPromise) {
     _pluginPromise = import('@ebarooni/capacitor-calendar').then(m => m.CapacitorCalendar);
   }
