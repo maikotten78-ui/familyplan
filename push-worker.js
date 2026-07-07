@@ -102,8 +102,13 @@ async function checkFamilyReminders(familyId, now, nowDate, env, log = console.l
   const subs = await subsRes.json();
   if (!tasks || !subs || Object.keys(subs).length === 0) return;
   const todayISO = localISO(nowDate);
-  const currentHour = nowDate.getHours();
-  const currentMin = nowDate.getMinutes();
+  // Cloudflare Worker laeuft in UTC. getHours()/getMinutes() lieferten bisher
+  // die UTC-Stunde, nicht die deutsche Ortszeit -> Tagesuebersicht kam 1-2h
+  // zu spaet (aktuell Sommerzeit UTC+2). Fix: dieselbe getCETOffset()-Logik
+  // wie bei den (korrekt funktionierenden) Erinnerungen weiter unten nutzen.
+  const dailyTzOffset = getCETOffset(nowDate);
+  const currentHour = (nowDate.getUTCHours() + dailyTzOffset) % 24;
+  const currentMin = nowDate.getUTCMinutes();
   log(`[${familyId}] tasks=${Object.keys(tasks).length} subs=${Object.keys(subs).length} today=${todayISO}`);
   for (const [taskId, task] of Object.entries(tasks)) {
     if (!task || !task.time) continue;
