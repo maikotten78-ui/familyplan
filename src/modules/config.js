@@ -36,6 +36,15 @@ export const CALENDAR_SYNC_CONFLICT_STRATEGY = 'newer';
 // (visibleTo === 'all' || curUser enthalten) – keine fremden privaten Termine.
 export const CALENDAR_SYNC_RESPECT_VISIBILITY = true;
 
+// ── APP URL (fuer teilbare Links) ───────────────────────────
+// WICHTIG: location.origin darf NICHT fuer Einladungs-/Freigabelinks
+// verwendet werden - in der nativen iOS-App (Capacitor) liefert
+// location.origin "capacitor://localhost" statt der echten Domain, was
+// z.B. WhatsApp nicht als klickbaren Link erkennt. Diese feste Konstante
+// wird stattdessen fuer alle Links verwendet, die den Nutzer verlassen
+// (Einladungslinks etc.), egal ob aus Web-App oder nativer App geteilt.
+export const APP_URL = 'https://famiplan.app';
+
 // ── APP STORE (iOS) ─────────────────────────────────────────
 // Sobald famiplan im App Store gelistet ist: hier die App-Store-URL
 // eintragen (z.B. 'https://apps.apple.com/app/idXXXXXXXXXX'). Solange

@@ -3,7 +3,7 @@
 // Onboarding-Flow, Family-Setup, Install-Prompt, FAB, shareInviteLink
 // ══════════════════════════════════════════════════════════════
 
-import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS } from '../modules/config.js';
+import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS, APP_URL } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, genFamilyId, genInviteToken } from '../modules/utils.js';
 import { fbFetch, fbSet, syncPublicFamily } from '../modules/firebase.js';
@@ -251,7 +251,7 @@ async function createInviteLink() {
     method: 'PUT',
     body: JSON.stringify({ createdBy, createdAt: now, expiresAt: now + EXPIRES_MS }),
   });
-  return `${location.origin}/join.html?id=${familyId}&token=${token}&name=${encodeURIComponent(familyName)}`;
+  return `${APP_URL}/join.html?id=${familyId}&token=${token}&name=${encodeURIComponent(familyName)}`;
 }
 
 export async function obShareInvite() {
