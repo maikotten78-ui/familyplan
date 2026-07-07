@@ -274,7 +274,12 @@ export async function obShareInvite() {
   };
 
   if (navigator.share) {
-    navigator.share({ title: 'famiplan – Einladung', text, url }).catch((e) => {
+    // WICHTIG: NUR text übergeben, kein separates url-Feld zusätzlich.
+    // Der Link steckt bereits im Text. Übergibt man url zusätzlich,
+    // hängt die Web-Share-API (v.a. iOS + WhatsApp) den Link oft ohne
+    // Leerzeichen direkt an den Text an - der Link wird dann nicht mehr
+    // als anklickbarer Link erkannt (verschmilzt mit dem Text davor).
+    navigator.share({ title: 'famiplan – Einladung', text }).catch((e) => {
       if (e && e.name === 'AbortError') return; // Nutzer hat selbst abgebrochen, kein Fehler
       fallback();
     });
@@ -324,7 +329,12 @@ export async function shareInviteLink() {
   }
   const text = `Hey! 👋 Ich nutze famiplan für unsere Familienplanung – Aufgaben, Termine & Einkauf auf einen Blick.\n\nTritt hier bei (Link ist 7 Tage gültig): ${url}`;
 
-  if (navigator.share) { navigator.share({ title: 'famiplan – Familieneinladung', text, url }).catch(() => {}); return; }
+  if (navigator.share) {
+    // Siehe Kommentar in obShareInvite(): NUR text, kein zusaetzliches
+    // url-Feld, sonst haengt WhatsApp/iOS den Link ohne Leerzeichen an.
+    navigator.share({ title: 'famiplan – Familieneinladung', text }).catch(() => {});
+    return;
+  }
 
   openModal(`
     <div class="modal-handle"></div>
