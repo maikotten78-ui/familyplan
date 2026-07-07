@@ -872,7 +872,7 @@ window._app = {
   setMealWeekOffset:  (n) => { setState({mealWeekOffset:n}); renderContent(); },
   _mealWeekLock:      () => { import('./ui/modals.js').then(m => m.showUpgradeModal('mealWeeks')); },
   boardToggleReaction: (pid,e) => boardToggleReaction(pid,e,renderContent),
-  boardShowReaders: (pid) => boardShowReaders(pid, openModal, escapeHtml, boardTimeAgo),
+  boardShowReaders: (pid, rid) => boardShowReaders(pid, rid, openModal, escapeHtml, boardTimeAgo),
   boardDeletePost:  (pid) => boardDeletePost(pid, renderContent),
   boardSubmitPost:  () => boardSubmitPost(closeModal, renderContent, showSync, checkRateLimit,
     (t,d,o) => sendPushToFamily(t,d,o), (k,def) => getPushSetting(k,def)),

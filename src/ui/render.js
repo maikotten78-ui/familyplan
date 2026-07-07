@@ -1217,12 +1217,26 @@ export function renderBoard() {
       if (repliesOpen) {
         const replyItems = replies.map(([rid, r]) => {
           const canDelR = r.author === state.curUser || state.currentAuthUser?.uid;
+
+          // Gelesen-von auch pro Antwort (analog zum Haupt-Post)
+          const rReaders = Object.values(r.reads || {}).filter(x => x.name && x.name !== r.author);
+          let rReadReceiptHTML = '';
+          if (state.members.length > 1) {
+            if (rReaders.length) {
+              const rNames = rReaders.map(x => escapeHtml(x.name)).join(', ');
+              rReadReceiptHTML = `<div class="board-read-receipt" onclick="window._app.boardShowReaders('${postId}','${rid}')" style="font-size:10px;color:var(--accent,#5C4EE5);cursor:pointer;padding:2px 2px 0">✓✓ Gelesen von ${rNames}</div>`;
+            } else if (r.author === state.curUser) {
+              rReadReceiptHTML = `<div class="board-read-receipt" style="font-size:10px;color:var(--text3);padding:2px 2px 0">✓ Gesendet</div>`;
+            }
+          }
+
           return `<div class="board-reply">
             <div class="board-reply-av">${state.photos?.[r.author] ? `<img src="${state.photos[r.author]}">` : (state.av[r.author] || '👤')}</div>
             <div class="board-reply-bubble">
               <span class="board-reply-author">${escapeHtml(r.author)}</span>
               <span class="board-reply-text">${escapeHtml(r.text)}</span>
               <span class="board-reply-time">${boardTimeAgo(r.ts)}</span>
+              ${rReadReceiptHTML}
             </div>
             ${canDelR ? `<button class="board-reply-del" onclick="window._app.boardDeleteReply('${postId}','${rid}')">×</button>` : ''}
           </div>`;

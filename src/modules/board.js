@@ -63,26 +63,51 @@ export async function boardMarkPostsRead() {
   const uid = currentAuthUser.uid;
   const now = Date.now();
 
-  const toWrite = Object.entries(state.boardPosts).filter(([, post]) => {
+  // Haupt-Posts
+  const postsToWrite = Object.entries(state.boardPosts).filter(([, post]) => {
     if (post.author === curUser) return false;           // eigene Posts nicht markieren
     return !post.reads || !post.reads[uid];               // schon gelesen? überspringen
   });
-  if (!toWrite.length) return;
+
+  // Antworten (analog zu Posts, aber pro einzelner Antwort)
+  const repliesToWrite = [];
+  Object.entries(state.boardPosts).forEach(([postId, post]) => {
+    Object.entries(post.replies || {}).forEach(([replyId, reply]) => {
+      if (reply.author === curUser) return;               // eigene Antworten nicht markieren
+      if (reply.reads && reply.reads[uid]) return;         // schon gelesen? überspringen
+      repliesToWrite.push([postId, replyId, reply]);
+    });
+  });
+
+  if (!postsToWrite.length && !repliesToWrite.length) return;
 
   const updatedPosts = { ...state.boardPosts };
-  toWrite.forEach(([postId, post]) => {
+  postsToWrite.forEach(([postId, post]) => {
     updatedPosts[postId] = { ...post, reads: { ...(post.reads || {}), [uid]: { name: curUser, ts: now } } };
+  });
+  repliesToWrite.forEach(([postId, replyId, reply]) => {
+    const post = updatedPosts[postId] || state.boardPosts[postId];
+    const updatedReplies = { ...(post.replies || {}) };
+    updatedReplies[replyId] = { ...reply, reads: { ...(reply.reads || {}), [uid]: { name: curUser, ts: now } } };
+    updatedPosts[postId] = { ...post, replies: updatedReplies };
   });
   setState({ boardPosts: updatedPosts });
 
-  await Promise.all(toWrite.map(([postId]) =>
-    fbSet(`board/${postId}/reads/${uid}`, { name: curUser, ts: now }).catch(() => {})
-  ));
+  await Promise.all([
+    ...postsToWrite.map(([postId]) =>
+      fbSet(`board/${postId}/reads/${uid}`, { name: curUser, ts: now }).catch(() => {})
+    ),
+    ...repliesToWrite.map(([postId, replyId]) =>
+      fbSet(`board/${postId}/replies/${replyId}/reads/${uid}`, { name: curUser, ts: now }).catch(() => {})
+    ),
+  ]);
 }
 
-export function boardShowReaders(postId, openModal, escapeHtml, boardTimeAgo) {
+export function boardShowReaders(postId, replyId, openModal, escapeHtml, boardTimeAgo) {
   const post = state.boardPosts[postId]; if (!post) return;
-  const readers = Object.values(post.reads || {}).filter(r => r.name && r.name !== post.author);
+  const entity = replyId ? (post.replies || {})[replyId] : post;
+  if (!entity) return;
+  const readers = Object.values(entity.reads || {}).filter(r => r.name && r.name !== entity.author);
   const itemsHTML = readers.length
     ? readers.sort((a, b) => a.ts - b.ts).map(r => `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
