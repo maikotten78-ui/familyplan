@@ -344,7 +344,7 @@ export async function shareInviteLink() {
 }
 
 // ── INSTALL PROMPT ────────────────────────────────────────────
-export function showInstallPrompt() {
+export function showInstallPrompt(_retryCount = 0) {
   if (localStorage.getItem('fp_install_shown')) return;
   if (localStorage.getItem('fp_demo_mode'))     return;
   if (window.matchMedia('(display-mode: standalone)').matches) return;
@@ -353,7 +353,6 @@ export function showInstallPrompt() {
   try {
     if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return;
   } catch (e) { /* kein Capacitor verfuegbar -> normale Web-Version, weiter */ }
-  localStorage.setItem('fp_install_shown', '1');
 
   const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isAndroid = /android/i.test(navigator.userAgent);
@@ -376,7 +375,18 @@ export function showInstallPrompt() {
       <div class="install-step"><div class="install-ico">2</div><div class="install-txt">Klicke auf <strong>„Installieren"</strong></div></div>`;
   }
 
-  setTimeout(() => openModal(`
+  setTimeout(() => {
+    // Nicht anzeigen, wenn gerade ein anderes Modal offen ist (z.B. das
+    // automatische "Erstes Profil"-Modal nach obFinish()) - sonst würde
+    // openModal() dieses Modal sofort schließen (openModal() ruft intern
+    // immer erst closeModal() auf). Stattdessen später erneut versuchen
+    // (max. 5x, danach aufgeben statt endlos zu verzögern).
+    if (state.modalEl) {
+      if (_retryCount < 5) setTimeout(() => showInstallPrompt(_retryCount + 1), 1500);
+      return;
+    }
+    localStorage.setItem('fp_install_shown', '1');
+    openModal(`
     <div class="modal-handle"></div>
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:48px;margin-bottom:8px">📲</div>
@@ -389,7 +399,8 @@ export function showInstallPrompt() {
     </div>
     <button class="submit-btn" onclick="window._app.closeModal()">Verstanden ✓</button>
     <button class="modal-close" onclick="window._app.closeModal()">Später</button>
-  `), 1000);
+  `);
+  }, 1000);
 }
 
 // ── FAB ───────────────────────────────────────────────────────

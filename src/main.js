@@ -160,6 +160,7 @@ window._app = {
   // Members
   showAddMemberModal:  (isFirst) => showAddMemberModal(isFirst, openModal, closeModal, showSync, showUserModal),
   showEditMemberModal: (name)    => showEditMemberModal(name, openModal),
+  setNewMemberEmoji:   (e) => { state._newMemberEmoji = e; },
 
   // Onboarding
   obGoTo, obSelectEmoji, obCreateFamily, obJoinFamily, obCreateProfile,
