@@ -283,4 +283,46 @@ export function showEditMemberModal(name, openModal) {
   `);
 }
 
+// ── ACCOUNT ↔ MITGLIED-VERKNÜPFUNG (fuer Zugriffs-Verwaltung) ──
+// Verknuepft den aktuell angemeldeten Firebase-Account (UID) mit dem
+// Profil-Namen, den er beim Beitreten/Erstellen gewaehlt hat. Getrennt
+// von state.curUser (das ist nur die aktuell angezeigte Persona auf
+// diesem Geraet, z.B. bei einem gemeinsamen Familien-Tablet) – hier
+// geht es um "welcher Account gehoert zur Familie", fuer den echten
+// Zugriffs-Entzug weiter unten.
+export async function bindMemberUid(name) {
+  const { currentAuthUser } = state;
+  if (!currentAuthUser || !name) return;
+  try {
+    const existing = await fbGet(`memberUids/${currentAuthUser.uid}`);
+    if (existing) return; // schon verknuepft, nicht ueberschreiben
+    await fbSet(`memberUids/${currentAuthUser.uid}`, { name, joinedAt: Date.now() });
+  } catch (e) { /* non-kritisch */ }
+}
+
+// ── VERBUNDENE ACCOUNTS LADEN ───────────────────────────────────
+export async function loadConnectedAccounts() {
+  try {
+    const data = await fbGet('memberUids');
+    return data || {};
+  } catch (e) { return {}; }
+}
+
+// ── ZUGRIFF EINES ANDEREN ACCOUNTS ENTZIEHEN ────────────────────
+// Loescht die Verknuepfung UND setzt bei diesem Account die
+// Familienzugehoerigkeit zurueck (users/{uid}/family). Nur moeglich
+// fuer Accounts der EIGENEN Familie (serverseitig per Firebase-Regel
+// erzwungen), nicht fuer sich selbst.
+export async function revokeMemberAccess(targetUid) {
+  const { currentAuthUser, familyId } = state;
+  if (!currentAuthUser || !familyId || !targetUid) return false;
+  if (targetUid === currentAuthUser.uid) return false; // eigenen Zugriff hier nicht entziehen
+  try {
+    const res = await fbFetch(`${DB_ROOT}/users/${targetUid}/family.json`, { method: 'DELETE' });
+    if (!res.ok) return false;
+    await fbDel(`memberUids/${targetUid}`);
+    return true;
+  } catch (e) { return false; }
+}
+
 

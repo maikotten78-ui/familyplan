@@ -11,6 +11,7 @@ import { saveMeal, toggleOptionalIngredient, deleteMealRecipe, saveRecipeSteps }
 import { isPremiumActive, isAdmin } from '../modules/premium.js';
 import { openModal, closeModal, showSync } from './modal.js';
 import { renderContent } from './render.js';
+import { loadConnectedAccounts, revokeMemberAccess } from '../modules/members.js';
 
 // ── Optionale Zutaten Checkboxen ─────────────────────────────
 function rebuildOptChecks(val, selectedList) {
@@ -1162,11 +1163,55 @@ export function showUserModal() {
     ${state.curUser ? `<button class="modal-close" onclick="window._app.closeModal()">Abbrechen</button>` : ''}
     <button style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showPushPage(),400)">🔔 Benachrichtigungen</button>
     ${window._app.isCalendarSyncSupported && window._app.isCalendarSyncSupported() ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showCalendarSyncPage(),400)">🗓️ Apple Kalender</button>` : ''}
+    <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showConnectedAccountsModal(),400)">👥 Verbundene Accounts</button>
     <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#FEF2F2;color:#DC2626;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.authSignOut()">🚪 Abmelden</button>
     <button style="width:100%;margin-top:6px;padding:9px;border:none;border-radius:10px;background:none;color:var(--text3);font-weight:500;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.showDeleteAccountModal()">Account löschen</button>
     ${isAdmin() ? `<button style="width:100%;margin-top:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:#5C4EE5;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showAdminPanel()">🛡 Admin-Panel</button>` : ''}
     ${PREMIUM_ENABLED ? buildPlanSection() : ''}
   `);
+}
+
+// ── VERBUNDENE ACCOUNTS ──────────────────────────────────────
+export async function showConnectedAccountsModal() {
+  openModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">👥 Verbundene Accounts</div>
+    <div class="modal-sub">Lädt…</div>
+  `);
+
+  const myUid = state.currentAuthUser?.uid;
+  const accounts = await loadConnectedAccounts();
+  const entries = Object.entries(accounts || {});
+
+  const rows = entries.length ? entries.map(([uid, info]) => {
+    const isMe = uid === myUid;
+    const joined = info.joinedAt ? new Date(info.joinedAt).toLocaleDateString('de-DE') : '';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--text1)">${escapeHtml(info.name || '?')}${isMe ? ' <span style="color:var(--text3);font-weight:500">(du)</span>' : ''}</div>
+        <div style="font-size:11px;color:var(--text3)">${joined ? `Verbunden seit ${joined}` : ''}</div>
+      </div>
+      ${!isMe ? `<button onclick="window._app.confirmRevokeMemberAccess('${uid.replace(/'/g, "\\'")}','${escapeAttr(info.name || '')}')"
+        style="padding:8px 14px;border:none;border-radius:10px;background:#FEF2F2;color:#DC2626;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">Entfernen</button>` : ''}
+    </div>`;
+  }).join('') : `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Keine verbundenen Accounts gefunden.<br>(Ältere Profile werden beim nächsten Öffnen der App automatisch nachgetragen.)</div>`;
+
+  openModal(`
+    <div class="modal-handle"></div>
+    <div class="modal-title">👥 Verbundene Accounts</div>
+    <div class="modal-sub">Diese Accounts haben Zugriff auf eure Familie</div>
+    <div>${rows}</div>
+    <button class="modal-close" onclick="window._app.closeModal();window._app.showUserModal()" style="margin-top:14px">Zurück</button>
+  `);
+}
+
+export function confirmRevokeMemberAccess(uid, name) {
+  if (!confirm(`Zugriff für „${name}" wirklich entziehen? Der Account verliert damit sofort den Zugang zu allen Familiendaten und müsste erneut eingeladen werden.`)) return;
+  showSync('Wird entfernt…');
+  revokeMemberAccess(uid).then(ok => {
+    if (ok) { showSync('✓ Zugriff entzogen'); showConnectedAccountsModal(); }
+    else showSync('Fehler beim Entfernen. Bitte erneut versuchen.');
+  });
 }
 
 export function selectUser(name) {

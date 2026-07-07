@@ -17,7 +17,8 @@ import { initFirebaseAuth, showAuthScreen, showAuthScreenDirect,
 // Members
 import { loadMembers, saveMember, renameMember, deleteMember,
          loadPhotos, savePhotoToFirebase, handlePhotoUpload,
-         showAddMemberModal, showEditMemberModal } from './modules/members.js';
+         showAddMemberModal, showEditMemberModal,
+         bindMemberUid, loadConnectedAccounts, revokeMemberAccess } from './modules/members.js';
 
 // Tasks
 import { loadTasks, subscribeToTasks, addTask, saveEdit, assignTask, unassign,
@@ -62,6 +63,7 @@ import { showCalendarSyncPage } from './ui/calendarSyncPage.js';
 import { isCalendarSyncSupported, initCalendarSyncTriggers } from './modules/calendarSync.js';
 import { showAddModal, showEditModal, showMealEditModal, showUserModal, showBoardNewModal,
          showUpgradeModal, exportCal, openMaps, selectUser,
+         showConnectedAccountsModal, confirmRevokeMemberAccess,
          setFF, setDate, toggleWD, onEndTimeChange, onDurChange, toggleAttendee, toggleVisibleTo,
          applyMealRecipe, confirmSaveMeal, showDeleteAccountModal as showDelAccModal,
          _mealNameAcUpdate, _mealNameAcSelect, _mealNameAcKey,
@@ -132,6 +134,7 @@ window._app = {
   toggleMealExtras: (iso) => { import('./ui/render.js').then(m => m.toggleMealExtras(iso)); },
   // User modal
   showUserModal, selectUser,
+  showConnectedAccountsModal, confirmRevokeMemberAccess,
   // Apple Calendar Sync (hinter Feature-Flag, siehe config.js CALENDAR_SYNC_ENABLED)
   showCalendarSyncPage, isCalendarSyncSupported,
   // Board modal
@@ -1163,7 +1166,7 @@ window._rebuildOptChecks = function(val) {
 
 
 // ── APP INIT ──────────────────────────────────────────────────
-function appInit() {
+export function appInit() {
   if (!state.familyId) {
     setState({
       familyId:   localStorage.getItem('fp_family_id')   || '',
@@ -1223,6 +1226,7 @@ function appInit() {
       if (ns) ns.remove();
       setState({ curUser: savedUser, boardLastSeen: parseInt(localStorage.getItem('fp_board_seen') || '0') });
       loadMembers(renderContent, _showAddMember).then(loadAll);
+      bindMemberUid(savedUser).catch(() => {}); // Selbstheilung fuer Alt-Accounts ohne Verknuepfung
 
       if ('Notification' in window && Notification.permission === 'default' && !localStorage.getItem('fp_push_prompted')) {
         localStorage.setItem('fp_push_prompted', '1');
@@ -1255,6 +1259,7 @@ function showNameScreen() {
 window._app.selectName = (name) => {
   try { localStorage.setItem('fp_user', name); } catch {}
   setState({ curUser: name });
+  bindMemberUid(name).catch(() => {});
   const ns = document.getElementById('name-screen');
   if (ns) { ns.classList.remove('visible'); ns.style.transition='opacity 0.4s'; ns.style.opacity='0'; setTimeout(()=>ns.remove(),400); }
   const ub = document.getElementById('user-btn');
@@ -1273,6 +1278,7 @@ window._app.confirmAddMember = (isFirst) => {
     if (isFirst) {
       setState({ curUser: name });
       try { localStorage.setItem('fp_user', name); } catch {}
+      bindMemberUid(name).catch(() => {});
       loadTasks(renderContent, loadComments); loadShopping(renderContent);
     } else { showUserModal(); }
   });

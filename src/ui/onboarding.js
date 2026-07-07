@@ -7,7 +7,7 @@ import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS }
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, genFamilyId, genInviteToken } from '../modules/utils.js';
 import { fbFetch, fbSet, syncPublicFamily } from '../modules/firebase.js';
-import { saveMember } from '../modules/members.js';
+import { saveMember, bindMemberUid } from '../modules/members.js';
 import { saveUserFamily, hideAuthScreen } from '../modules/auth.js';
 import { checkRateLimit } from '../modules/premium.js';
 import { openModal, closeModal, showSync } from './modal.js';
@@ -203,6 +203,7 @@ export async function obCreateProfile() {
   await saveMember(name, state.obSelectedEmoji || '🧑', true, checkRateLimit);
   setState({ curUser: name });
   try { localStorage.setItem('fp_user', name); } catch {}
+  bindMemberUid(name).catch(() => {});
 
   const sub = document.getElementById('ob-done-sub');
   if (sub) sub.textContent = `Hallo ${state.obSelectedEmoji} ${name}! Willkommen bei famiplan.`;
@@ -230,39 +231,78 @@ export async function obAddTemplates() {
 }
 
 // ── SHARE INVITE FROM ONBOARDING ──────────────────────────────
-export function obShareInvite() {
-  const { familyId, familyName } = state;
+// ── GEMEINSAME HILFSFUNKTION: Einladungs-Token erzeugen ────────
+// Wird von obShareInvite() (Onboarding "Fertig"-Screen) UND
+// shareInviteLink() (Profil-Menü) genutzt, damit beide Einstiegspunkte
+// konsistent das einmalig nutzbare, 7 Tage gültige Token verwenden statt
+// der alten dauerhaften Familien-ID.
+async function createInviteLink() {
+  const { familyId, familyName, curUser } = state;
+  if (!familyId || familyId === 'DEMO01') return null;
+  const token = genInviteToken();
+  const now = Date.now();
+  const EXPIRES_MS = 7 * 24 * 60 * 60 * 1000; // 7 Tage
+  // WICHTIG: createdBy braucht einen nicht-leeren Fallback — an dieser
+  // Stelle (z.B. Onboarding-"Fertig"-Screen) ist evtl. noch kein eigenes
+  // Profil gewählt (state.curUser leer), die Firebase-Regel verlangt aber
+  // mindestens 1 Zeichen.
+  const createdBy = curUser || familyName || 'Familie';
+  await fbFetch(`${DB_ROOT}/families/${familyId}/invites/${token}.json`, {
+    method: 'PUT',
+    body: JSON.stringify({ createdBy, createdAt: now, expiresAt: now + EXPIRES_MS }),
+  });
+  return `${location.origin}/join.html?id=${familyId}&token=${token}&name=${encodeURIComponent(familyName)}`;
+}
+
+export async function obShareInvite() {
+  const { familyId } = state;
   if (!familyId || familyId === 'DEMO01') return;
-  const url  = `${location.origin}/join.html?id=${familyId}&name=${encodeURIComponent(familyName)}`;
-  const text = `Hey! Ich nutze famiplan für unsere Familienplanung. Tritt hier bei: ${url}`;
-  if (navigator.share) { navigator.share({ title: 'famiplan – Einladung', text, url }).catch(() => {}); }
-  else if (/android|iphone|ipad/i.test(navigator.userAgent)) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`); }
-  else { navigator.clipboard?.writeText(url).then(() => showSync('Link kopiert! 📋')).catch(() => showSync('Link: ' + url)); }
+
+  let url;
+  try {
+    url = await createInviteLink();
+    if (!url) return;
+  } catch (e) {
+    showSync('Fehler beim Erstellen der Einladung. Bitte erneut versuchen.');
+    return;
+  }
+  const text = `Hey! Ich nutze famiplan für unsere Familienplanung. Tritt hier bei (Link ist 7 Tage gültig): ${url}`;
+
+  const fallback = () => {
+    if (/android|iphone|ipad/i.test(navigator.userAgent)) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); }
+    else { navigator.clipboard?.writeText(url).then(() => showSync('Link kopiert! 📋')).catch(() => showSync('Link: ' + url)); }
+  };
+
+  if (navigator.share) {
+    navigator.share({ title: 'famiplan – Einladung', text, url }).catch((e) => {
+      if (e && e.name === 'AbortError') return; // Nutzer hat selbst abgebrochen, kein Fehler
+      fallback();
+    });
+  } else {
+    fallback();
+  }
 }
 
 // ── FINISH ONBOARDING ─────────────────────────────────────────
 export function obFinish() {
   const screen = document.getElementById('family-screen');
   if (screen) { screen.style.transition = 'opacity 0.4s'; screen.style.opacity = '0'; setTimeout(() => screen.style.display = 'none', 400); }
-  const { familyId, familyName, curUser, av } = state;
+  const { familyId, familyName } = state;
   const fib = document.getElementById('family-info-bar');
   const fnd = document.getElementById('family-name-display');
   const fid = document.getElementById('family-id-display');
   if (fib) fib.style.display = 'none';
   if (fnd) fnd.textContent  = familyName;
   if (fid) fid.textContent  = familyId;
-  const ub = document.getElementById('user-btn');
-  if (ub) ub.textContent = (av[curUser] || '👤') + ' ' + curUser;
 
-  // Load all data
-  Promise.all([
-    import('./render.js').then(m => {
-      import('../modules/tasks.js').then(t => t.loadTasks(m.renderContent, () => {}));
-      import('../modules/shopping.js').then(s => s.loadShopping(m.renderContent));
-      import('../modules/meals.js').then(me => me.loadMeals(m.renderContent));
-      import('../modules/board.js').then(b => b.loadBoard(m.renderContent, () => {}));
-    }),
-  ]);
+  // WICHTIG: appInit() erneut aufrufen (state.familyId ist jetzt gesetzt).
+  // Das übernimmt zuverlässig alles Nötige – Mitglieder laden, Aufgaben/
+  // Einkaufsliste/etc. laden, UND die Profil-Auswahl (showNameScreen)
+  // anzeigen, falls noch niemand ausgewählt wurde. Vorher fehlte genau
+  // dieser letzte Schritt: nach frischer Registrierung landete man ohne
+  // Profil-Auswahl direkt in der App.
+  import('../main.js').then(m => m.appInit());
+
   showInstallPrompt();
   // Trigger first-tab tour after short delay
   setTimeout(() => window._app?.setTab?.('today'), 1200);
@@ -271,28 +311,17 @@ export function obFinish() {
 // ── SHARE INVITE LINK (from user modal) ──────────────────────
 export async function shareInviteLink() {
   closeModal();
-  const { familyId, familyName, curUser } = state;
+  const { familyId } = state;
   if (!familyId) return;
 
-  // Einmalig nutzbares, 7 Tage gültiges Einladungs-Token statt der
-  // dauerhaften Familien-ID – die Familien-ID allein bleibt zwar als
-  // Fallback (manuelle Eingabe) nutzbar, aber der geteilte Link ist
-  // jetzt nicht mehr auf unbegrenzte Zeit gültig und nicht mehrfach
-  // verwendbar.
-  const token = genInviteToken();
-  const now = Date.now();
-  const EXPIRES_MS = 7 * 24 * 60 * 60 * 1000; // 7 Tage
+  let url;
   try {
-    await fbFetch(`${DB_ROOT}/families/${familyId}/invites/${token}.json`, {
-      method: 'PUT',
-      body: JSON.stringify({ createdBy: curUser || '', createdAt: now, expiresAt: now + EXPIRES_MS }),
-    });
+    url = await createInviteLink();
+    if (!url) return;
   } catch (e) {
     showSync('Fehler beim Erstellen der Einladung. Bitte erneut versuchen.');
     return;
   }
-
-  const url  = `${location.origin}/join.html?id=${familyId}&token=${token}&name=${encodeURIComponent(familyName)}`;
   const text = `Hey! 👋 Ich nutze famiplan für unsere Familienplanung – Aufgaben, Termine & Einkauf auf einen Blick.\n\nTritt hier bei (Link ist 7 Tage gültig): ${url}`;
 
   if (navigator.share) { navigator.share({ title: 'famiplan – Familieneinladung', text, url }).catch(() => {}); return; }
@@ -319,6 +348,11 @@ export function showInstallPrompt() {
   if (localStorage.getItem('fp_install_shown')) return;
   if (localStorage.getItem('fp_demo_mode'))     return;
   if (window.matchMedia('(display-mode: standalone)').matches) return;
+  // In der nativen iOS-App (Capacitor) ist "Zum Home-Bildschirm hinzufügen"
+  // irrelevant - die App ist ja schon installiert. Nur in der Web-Version zeigen.
+  try {
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return;
+  } catch (e) { /* kein Capacitor verfuegbar -> normale Web-Version, weiter */ }
   localStorage.setItem('fp_install_shown', '1');
 
   const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
