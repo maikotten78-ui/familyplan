@@ -318,6 +318,19 @@ export async function revokeMemberAccess(targetUid) {
   if (!currentAuthUser || !familyId || !targetUid) return false;
   if (targetUid === currentAuthUser.uid) return false; // eigenen Zugriff hier nicht entziehen
   try {
+    // WICHTIG (Sicherheits-Review 08.07.2026): familyRevokedAt-Flag ZUERST
+    // setzen, VOR dem Loeschen von family. Grund: proceedAfterAuth() (auth.js)
+    // hat eine "Reparatur aus localStorage-Cache"-Logik fuer den Fall, dass
+    // Firebase mal keine familyId hat obwohl der Cache noch eine kennt (war
+    // urspruenglich gegen einen Registrierungs-Bug gedacht). Ohne dieses Flag
+    // wuerde genau diese Logik einen entzogenen Zugriff auf dem Geraet des
+    // betroffenen Accounts beim naechsten App-Start automatisch wiederherstellen.
+    const flagRes = await fbFetch(`${DB_ROOT}/users/${targetUid}/familyRevokedAt.json`, {
+      method: 'PUT',
+      body: JSON.stringify(Date.now()),
+    });
+    if (!flagRes.ok) return false;
+
     const res = await fbFetch(`${DB_ROOT}/users/${targetUid}/family.json`, { method: 'DELETE' });
     if (!res.ok) return false;
     await fbDel(`memberUids/${targetUid}`);

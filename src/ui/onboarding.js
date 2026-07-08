@@ -6,7 +6,7 @@
 import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS, APP_URL } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, genFamilyId, genInviteToken } from '../modules/utils.js';
-import { fbFetch, fbSet, syncPublicFamily } from '../modules/firebase.js';
+import { fbFetch, fbSet, syncPublicFamily, getAuthToken } from '../modules/firebase.js';
 import { saveMember, bindMemberUid } from '../modules/members.js';
 import { saveUserFamily, hideAuthScreen } from '../modules/auth.js';
 import { checkRateLimit } from '../modules/premium.js';
@@ -102,18 +102,24 @@ export async function obCreateFamily() {
   // NICHT familyId:ADMIN_FAMILY_ID verwenden — das würde an ALLE
   // Push-Abonnenten dieser Familie gehen (z.B. auch normale Mitglieder),
   // nicht nur an den/die Admin(s).
-  (ADMIN_UIDS || []).forEach(adminUid => {
-    fetch(`${PUSH_WORKER_URL}/push/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        familyId: ADMIN_FAMILY_ID,
-        targetUid: adminUid,
-        type: 'default',
-        payload: { text: `🎉 Neue Familie: „${name}“ (${id})` }
-      })
-    }).catch(() => {});
-  });
+  // Seit dem Sicherheits-Review 08.07.2026 prueft der Push-Worker das
+  // Authorization-Token - deshalb hier (anders als vorher) mitschicken.
+  getAuthToken().then(adminNotifyToken => {
+    const headers = { 'Content-Type': 'application/json' };
+    if (adminNotifyToken) headers['Authorization'] = 'Bearer ' + adminNotifyToken;
+    (ADMIN_UIDS || []).forEach(adminUid => {
+      fetch(`${PUSH_WORKER_URL}/push/send`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          familyId: ADMIN_FAMILY_ID,
+          targetUid: adminUid,
+          type: 'default',
+          payload: { text: `🎉 Neue Familie: „${name}“ (${id})` }
+        })
+      }).catch(() => {});
+    });
+  }).catch(() => {});
 
   obGoTo(5);
 }

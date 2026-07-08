@@ -31,7 +31,13 @@ var push_worker_default = {
       }
       if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders });
       if (url.pathname === "/push/send") return await handleSendPush(request, env, corsHeaders);
-      if (url.pathname === "/push/subscribe") return await handleSubscribe(request, env, corsHeaders);
+      // /push/subscribe ist deaktiviert: wird vom Client nirgends genutzt
+      // (Subscriptions werden direkt per Firebase-SDK mit Nutzer-Token
+      // geschrieben, geschuetzt durch die Firebase Security Rules). Als
+      // offener, unauthentifizierter Endpunkt haette er mit dem
+      // FIREBASE_SECRET Admin-Rechte gehabt und die Rules umgangen -
+      // Sicherheits-Review 08.07.2026.
+      if (url.pathname === "/push/subscribe") return new Response("Disabled", { status: 410, headers: corsHeaders });
       if (url.pathname === "/push/unsubscribe") return await handleUnsubscribe(request, env, corsHeaders);
       return new Response("Not found", { status: 404, headers: corsHeaders });
     } catch (e) {
@@ -300,6 +306,28 @@ async function handleSendPush(request, env, corsHeaders) {
   const body = await request.json();
   const { familyId, type, payload, excludeUid, targetUid } = body;
   if (!familyId || !type || !payload) return jsonResponse({ error: "Missing fields" }, 400, corsHeaders);
+
+  // ── AUTORISIERUNG (Sicherheits-Review 08.07.2026) ──────────────
+  // Vorher war dieser Endpunkt komplett offen: jeder, der eine familyId
+  // kannte/erriet, konnte beliebigen Text als Push an echte Nutzer
+  // schicken. Jetzt: gueltiges Firebase-ID-Token erforderlich, UND der
+  // Absender muss entweder selbst Mitglied der Ziel-Familie sein, ODER
+  // es handelt sich um die Admin-Benachrichtigung bei Familien-Neugruendung
+  // (familyId = ADMIN_FAMILY_ID, targetUid = einer der ADMIN_UIDS).
+  const auth = await verifyFirebaseIdToken(request, env);
+  if (!auth) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+
+  let authorized = false;
+  try {
+    const ownFamilyRes = await fetch(`${env.FIREBASE_DB_URL}/users/${auth.uid}/family.json?auth=${env.FIREBASE_SECRET}`);
+    const ownFamily = ownFamilyRes.ok ? await ownFamilyRes.json() : null;
+    if (ownFamily && ownFamily.familyId === familyId) authorized = true;
+  } catch (e) { /* authorized bleibt false */ }
+  if (!authorized && familyId === ADMIN_FAMILY_ID && targetUid && ADMIN_UIDS.includes(targetUid)) {
+    authorized = true;
+  }
+  if (!authorized) return jsonResponse({ error: "Forbidden" }, 403, corsHeaders);
+
   const subs = await getSubscriptions(familyId, env);
   if (!subs || Object.keys(subs).length === 0) return jsonResponse({ sent: 0, message: "No subscribers" }, 200, corsHeaders);
   const notification = buildNotification(type, payload);
@@ -351,6 +379,16 @@ async function handleUnsubscribe(request, env, corsHeaders) {
   const body = await request.json();
   const { familyId, uid, target } = body;
   if (!familyId || !uid) return jsonResponse({ error: "Missing fields" }, 400, corsHeaders);
+
+  // ── AUTORISIERUNG (Sicherheits-Review 08.07.2026) ──────────────
+  // Vorher konnte jeder ohne Nachweis die Push-Subscription EINES
+  // BELIEBIGEN Nutzers loeschen (stiller DoS). Jetzt: gueltiges
+  // Firebase-ID-Token noetig, und die Token-UID muss der Ziel-UID
+  // entsprechen (man kann nur sich selbst abmelden).
+  const auth = await verifyFirebaseIdToken(request, env);
+  if (!auth) return jsonResponse({ error: "Unauthorized" }, 401, corsHeaders);
+  if (auth.uid !== uid) return jsonResponse({ error: "Forbidden" }, 403, corsHeaders);
+
   if (target === "web") {
     await patchSubscriptionFields(familyId, uid, { subscription: null }, env);
   } else if (target === "ios") {
@@ -677,6 +715,90 @@ function jsonResponse(data, status, corsHeaders) {
 __name(jsonResponse, "jsonResponse");
 __name2(jsonResponse, "jsonResponse");
 __name22(jsonResponse, "jsonResponse");
+
+// ══════════════════════════════════════════════════════════════
+// FIREBASE-ID-TOKEN-VERIFIZIERUNG (Sicherheits-Review 08.07.2026)
+// Verifiziert ein von der Firebase-Auth-SDK ausgestelltes ID-Token
+// direkt per Web Crypto (RS256) gegen Googles oeffentliche Schluessel -
+// ohne Firebase Admin SDK (im Cloudflare-Worker-Runtime nicht nutzbar).
+// Vgl. https://firebase.google.com/docs/auth/admin/verify-id-tokens
+// ("Verify ID tokens using a third-party JWT library").
+// ══════════════════════════════════════════════════════════════
+const FIREBASE_PROJECT_ID = "family-task-2cacf";
+const GOOGLE_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
+// Admin-UIDs/-FamilyId hier bewusst dupliziert (Client-Konstanten aus
+// src/modules/config.js sind im Worker nicht importierbar) - UIDs/IDs
+// sind keine Geheimnisse, nur Identifikatoren.
+const ADMIN_UIDS = ["mgvpHcR0jobEWj235h9Fz67tSw92", "TiO1QqsIibPKvvqkHlFUNTaHgpJ3"];
+const ADMIN_FAMILY_ID = "7YJ3Z9DW";
+
+let _jwksCache = null; // { keys, fetchedAt }
+
+async function getGoogleJwks() {
+  const now = Date.now();
+  if (_jwksCache && now - _jwksCache.fetchedAt < 3600 * 1000) return _jwksCache.keys;
+  const res = await fetch(GOOGLE_JWKS_URL);
+  if (!res.ok) throw new Error("JWKS fetch failed: " + res.status);
+  const data = await res.json();
+  _jwksCache = { keys: data.keys, fetchedAt: now };
+  return data.keys;
+}
+__name(getGoogleJwks, "getGoogleJwks");
+
+function b64urlToBytes(b64url) {
+  const b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = "=".repeat((4 - b64.length % 4) % 4);
+  const bin = atob(b64 + pad);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+__name(b64urlToBytes, "b64urlToBytes");
+
+function b64urlToJson(b64url) {
+  return JSON.parse(new TextDecoder().decode(b64urlToBytes(b64url)));
+}
+__name(b64urlToJson, "b64urlToJson");
+
+async function verifyFirebaseIdToken(request, env) {
+  try {
+    const authHeader = request.headers.get("Authorization") || "";
+    const m = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (!m) return null;
+    const token = m[1];
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const [headerB64, payloadB64, sigB64] = parts;
+    const header = b64urlToJson(headerB64);
+    const payload = b64urlToJson(payloadB64);
+
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) return null;
+    if (payload.aud !== FIREBASE_PROJECT_ID) return null;
+    if (!payload.exp || payload.exp < now) return null;
+    if (!payload.iat || payload.iat > now + 60) return null;
+    if (!payload.sub) return null;
+
+    const jwks = await getGoogleJwks();
+    const jwk = jwks.find((k) => k.kid === header.kid);
+    if (!jwk) return null;
+
+    const key = await crypto.subtle.importKey(
+      "jwk", jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false, ["verify"]
+    );
+    const signedData = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
+    const signature = b64urlToBytes(sigB64);
+    const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, signature, signedData);
+    if (!valid) return null;
+
+    return { uid: payload.sub };
+  } catch (e) {
+    return null;
+  }
+}
+__name(verifyFirebaseIdToken, "verifyFirebaseIdToken");
 export {
   push_worker_default as default
 };

@@ -274,10 +274,33 @@ export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
           setState({ tasks: [], boardPosts: {}, meals: {}, mealRecipes: {} });
         }
       } else {
-        // Firebase hat keine familyId – prüfe ob localStorage noch einen Wert hat
+        // Firebase hat keine familyId. Zwei moegliche Gruende:
+        // (a) echter Registrierungs-Bug/Race Condition -> aus dem lokalen
+        //     Cache reparieren (urspruengliches Verhalten, weiterhin noetig).
+        // (b) EXPLIZITER Zugriffsentzug durch ein anderes Familienmitglied
+        //     ("Verbundene Accounts" -> revokeMemberAccess()) -> darf NICHT
+        //     aus dem Cache repariert werden, sonst waere der Entzug
+        //     wirkungslos (Sicherheits-Review 08.07.2026).
+        // Unterscheidung ueber das familyRevokedAt-Flag, das
+        // revokeMemberAccess() gezielt vor dem Loeschen setzt.
+        let wasRevoked = false;
+        try {
+          const rr = await fbFetch(`${DB_ROOT}/users/${uid}/familyRevokedAt.json`);
+          const revokedAt = rr.ok ? await rr.json() : null;
+          if (revokedAt) {
+            wasRevoked = true;
+            // Flag verbrauchen, damit ein spaeterer regulaerer Neu-Beitritt
+            // (z.B. ueber einen neuen Einladungslink) nicht blockiert wird.
+            fbFetch(`${DB_ROOT}/users/${uid}/familyRevokedAt.json`, { method: 'DELETE' }).catch(() => {});
+          }
+        } catch (flagErr) {
+          console.warn('proceedAfterAuth: familyRevokedAt-Check fehlgeschlagen:', flagErr.message);
+        }
+
         const cachedFamilyId   = localStorage.getItem('fp_family_id')   || '';
         const cachedFamilyName = localStorage.getItem('fp_family_name') || '';
-        if (cachedFamilyId) {
+
+        if (cachedFamilyId && !wasRevoked) {
           // localStorage hat noch eine gültige familyId → behalten und Firebase reparieren
           console.warn('proceedAfterAuth: Firebase familyId leer, repariere aus localStorage:', cachedFamilyId);
           setState({ familyId: cachedFamilyId, familyName: cachedFamilyName });
@@ -291,7 +314,9 @@ export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
             console.warn('proceedAfterAuth: Firebase-Reparatur fehlgeschlagen:', repairErr.message);
           }
         } else {
-          // Wirklich neuer Account ohne Familie → alles leeren
+          // Wirklich neuer Account ohne Familie ODER Zugriff wurde
+          // entzogen → alles leeren, kein automatisches Wiederherstellen.
+          if (wasRevoked) console.warn('proceedAfterAuth: Zugriff wurde entzogen, Cache wird NICHT repariert.');
           setState({ familyId: '', familyName: '' });
           localStorage.removeItem('fp_family_id');
           localStorage.removeItem('fp_family_name');
