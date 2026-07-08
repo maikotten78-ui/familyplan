@@ -56,14 +56,25 @@ export async function loadUserPlan() {
     const uid = state.currentAuthUser.uid;
 
     // 1. Familien-Freizugang
+    // WICHTIG (Sicherheits-Review 08.07.2026): liegt seit heute unter dem
+    // eigenstaendigen Top-Level-Pfad familyAccess/{familyId}, NICHT mehr
+    // unter families/{familyId}/access. Grund: families/{familyId} hat ein
+    // breites .write fuer alle Familienmitglieder, das per Firebase-Regel-
+    // Kaskadierung nicht nachtraeglich eingeschraenkt werden kann - jedes
+    // Familienmitglied haette sich sonst selbst granted:true setzen koennen.
+    // familyAccess/{familyId} hat eine eigene .write-Regel (nur Admin).
     if (state.familyId) {
-      const ra     = await fbFetch(`${DB_ROOT}/families/${state.familyId}/access.json`);
+      const ra     = await fbFetch(`${DB_ROOT}/familyAccess/${state.familyId}.json`);
       const access = await ra.json();
       if (access && access.granted) { setPlan('granted'); return; }
     }
 
     // 2. Persönlicher Plan
-    const r    = await fbFetch(`${DB_ROOT}/users/${uid}/plan.json`);
+    // WICHTIG (Sicherheits-Review 08.07.2026): liegt seit heute unter
+    // userPlans/{uid} statt users/{uid}/plan - aus demselben Grund wie oben
+    // (users/{uid} hat .write fuer den Nutzer selbst, das haette sonst eine
+    // Selbstfreischaltung von Premium ohne Bezahlung erlaubt).
+    const r    = await fbFetch(`${DB_ROOT}/userPlans/${uid}.json`);
     const data = await r.json();
     if (data) {
       if (data.granted)                        { setPlan('granted', data); return; }

@@ -29,7 +29,7 @@ async function loadAdminUsers() {
       try {
         const [mR, aR, laR] = await withTimeout(Promise.all([
           fbFetch(`${DB_ROOT}/families/${fid}/members.json`),
-          fbFetch(`${DB_ROOT}/families/${fid}/access.json`),
+          fbFetch(`${DB_ROOT}/familyAccess/${fid}.json`),
           fbFetch(`${DB_ROOT}/families/${fid}/lastActiveAt.json`),
         ]));
         const members      = mR.ok  ? await mR.json()  : null;
@@ -109,11 +109,16 @@ async function refreshAdminList() {
 }
 
 // ── GRANT / REVOKE ────────────────────────────────────────────
+// Seit dem Sicherheits-Review 08.07.2026: familyAccess/{familyId} statt
+// families/{familyId}/access - eigenstaendiger Pfad mit eigener, striktem
+// Admin-only .write in den Firebase Rules (siehe premium.js loadUserPlan
+// fuer die Begruendung: Kaskadierung erlaubte vorher jedem Familienmitglied
+// eine Selbstfreischaltung).
 export async function adminGrantFamily(familyId) {
   if (!isAdmin()) return;
   const note = prompt('Notiz (optional, z.B. "Beta Tester"):', '') ?? '';
   if (note === null) return;
-  await fbFetch(`${DB_ROOT}/families/${familyId}/access.json`, {
+  await fbFetch(`${DB_ROOT}/familyAccess/${familyId}.json`, {
     method: 'PUT',
     body: JSON.stringify({ granted: true, grantedBy: state.currentAuthUser.uid, note, grantedAt: Date.now() }),
   });
@@ -123,7 +128,7 @@ export async function adminGrantFamily(familyId) {
 
 export async function adminRevokeFamily(familyId) {
   if (!isAdmin()) return;
-  await fbFetch(`${DB_ROOT}/families/${familyId}/access.json`, { method: 'DELETE' });
+  await fbFetch(`${DB_ROOT}/familyAccess/${familyId}.json`, { method: 'DELETE' });
   showSync('✓ Freizugang entzogen');
   refreshAdminList();
 }
