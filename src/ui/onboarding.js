@@ -192,6 +192,98 @@ export async function obJoinFamily() {
   } catch (e) { if (errEl) errEl.textContent = 'Fehler beim Verbinden.'; }
 }
 
+// ── FAMILIE WECHSELN (Einladungslink bei bereits eingeloggtem Nutzer) ──
+// famiplan ist bewusst 1 Account = 1 Familie (kein Multi-Family-Support).
+// Oeffnet ein bereits eingeloggter Nutzer den Einladungslink einer ANDEREN
+// Familie, darf das nicht stillschweigend ignoriert werden (verwirrend),
+// aber auch nicht automatisch die Familie wechseln (destruktiv). Stattdessen:
+// Bestaetigungsdialog, danach expliziter, sauberer Wechsel per Reload.
+export function showFamilySwitchConfirm(pendingId, pendingName, _retryCount = 0) {
+  if (state.modalEl && _retryCount < 20) { setTimeout(() => showFamilySwitchConfirm(pendingId, pendingName, _retryCount + 1), 500); return; }
+  if (state.modalEl) closeModal(); // nach ~10s: anderes Modal notfalls schliessen, dieser Dialog ist wichtig
+  const targetLabel = pendingName ? `„${pendingName}“` : `Familie ${pendingId}`;
+  const currentLabel = state.familyName ? `„${state.familyName}“` : 'deiner aktuellen Familie';
+  openModal(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:40px;margin-bottom:8px">⚠️</div>
+      <div class="modal-title">Familie wechseln?</div>
+    </div>
+    <div style="background:#FEF3C7;border-radius:14px;padding:16px;margin-bottom:20px;font-size:14px;line-height:1.5;color:#92400E">
+      Du bist aktuell Mitglied von ${currentLabel}. Dieser Einladungslink führt zu ${targetLabel}.
+      <br><br>
+      famiplan unterstützt aktuell nur <strong>eine</strong> Familie pro Account. Wenn du fortfährst, verlässt du ${currentLabel} und wechselst zu ${targetLabel}. Dieser Schritt kann nicht automatisch rückgängig gemacht werden.
+    </div>
+    <button class="submit-btn" style="background:#DC2626" onclick="window._app.confirmFamilySwitch()">Ja, Familie wechseln</button>
+    <button class="modal-close" onclick="window._app.cancelFamilySwitch()">Abbrechen</button>
+  `);
+}
+
+export async function confirmFamilySwitch() {
+  const btn = document.querySelector('.modal .submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Wird gewechselt…'; }
+
+  const pendingId    = sessionStorage.getItem('fp_pending_join_id')    || '';
+  const pendingToken = sessionStorage.getItem('fp_pending_join_token') || '';
+  if (!pendingId) { closeModal(); return; }
+
+  try {
+    let familyName = pendingId;
+
+    if (pendingToken) {
+      const tr = await fbFetch(`${DB_ROOT}/families/${pendingId}/invites/${pendingToken}.json`);
+      if (!tr.ok) { showSync('Einladung ungültig oder abgelaufen.'); closeModal(); clearPendingJoin(); return; }
+      const invite = await tr.json();
+      if (!invite || invite.usedBy || !invite.expiresAt || invite.expiresAt < Date.now()) {
+        showSync('Einladung ungültig, bereits verwendet oder abgelaufen.'); closeModal(); clearPendingJoin(); return;
+      }
+      const consumeRes = await fbFetch(`${DB_ROOT}/families/${pendingId}/invites/${pendingToken}.json`, {
+        method: 'PATCH',
+        body: JSON.stringify({ usedBy: state.currentAuthUser?.uid || 'pending', usedAt: Date.now() }),
+      });
+      if (!consumeRes.ok) { showSync('Einladung wurde inzwischen bereits verwendet.'); closeModal(); clearPendingJoin(); return; }
+    }
+
+    const mr   = await fbFetch(`${DB_ROOT}/families/${pendingId}/meta.json`);
+    const meta = mr.ok ? await mr.json() : null;
+    familyName = (meta && meta.name) || pendingId;
+
+    // Alte Familie sauber verlassen: Profilbindung (fp_user) gehoert zur
+    // ALTEN Familie und darf in der neuen nicht weiterverwendet werden.
+    localStorage.removeItem('fp_user');
+    localStorage.setItem('fp_family_id',   pendingId);
+    localStorage.setItem('fp_family_name', familyName);
+    localStorage.setItem('fp_family_role', 'member');
+
+    const uid = state.currentAuthUser?.uid;
+    if (uid) {
+      await fbFetch(`${DB_ROOT}/users/${uid}/family.json`, {
+        method: 'PUT',
+        body: JSON.stringify({ familyId: pendingId, familyName, updatedAt: Date.now() }),
+      });
+    }
+
+    clearPendingJoin();
+    // Sauberster Weg fuer einen kompletten Wechsel (Listener, Caches,
+    // Timer etc. zuruecksetzen): Seite neu laden, genau wie bei authSignOut().
+    window.location.href = window.location.pathname;
+  } catch (e) {
+    showSync('Fehler beim Wechseln der Familie.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Ja, Familie wechseln'; }
+  }
+}
+
+export function cancelFamilySwitch() {
+  clearPendingJoin();
+  closeModal();
+}
+
+function clearPendingJoin() {
+  sessionStorage.removeItem('fp_pending_join_id');
+  sessionStorage.removeItem('fp_pending_join_name');
+  sessionStorage.removeItem('fp_pending_join_token');
+}
+
 // ── CREATE PROFILE ────────────────────────────────────────────
 export async function obCreateProfile() {
   const name  = (document.getElementById('ob-profile-name')?.value || '').trim();

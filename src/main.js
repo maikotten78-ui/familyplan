@@ -54,7 +54,8 @@ import { setTab, setDay, updateNav, renderDayPills, startTabTour,
 import { renderContent, toggleShopCat, showOvTaskMenu, showAssignModal, showCommentsModal } from './ui/render.js';
 import { obGoTo, obSelectEmoji, obCreateFamily, obJoinFamily, obCreateProfile,
          obAddTemplates, obShareInvite, obFinish, obShowDemo, exitDemoMode,
-         shareInviteLink, showInstallPrompt, showFamilySetup, onFabClick } from './ui/onboarding.js';
+         shareInviteLink, showInstallPrompt, showFamilySetup, onFabClick,
+         showFamilySwitchConfirm, confirmFamilySwitch, cancelFamilySwitch } from './ui/onboarding.js';
 import { showPushPage, getPushSetting, setPushSetting, sendPushToFamily,
          savePushSubscriptionToServer, scheduleReminders } from './ui/push.js';
 import { showAdminPanel, adminGrantFamily, adminRevokeFamily,
@@ -179,6 +180,7 @@ window._app = {
   exitDemoMode,
   obAddTemplates, obShareInvite, obFinish, obShowDemo, exitDemoMode,
   shareInviteLink, showInstallPrompt, onFabClick,
+  confirmFamilySwitch, cancelFamilySwitch,
   showShopAddModal: () => {
     setState({ newShopItem: { name: '', emoji: '🛒', category: 'sonstiges', qty: 1, unit: '', fav: false } });
 
@@ -1206,6 +1208,20 @@ export function appInit() {
       }, 300);
     }
   } else {
+    // Bereits eingeloggter Nutzer oeffnet einen Einladungslink fuer eine
+    // ANDERE Familie als die eigene: nicht stillschweigend ignorieren,
+    // sondern Bestaetigungsdialog zeigen (famiplan = 1 Account = 1 Familie).
+    const pendingJoinId = sessionStorage.getItem('fp_pending_join_id');
+    if (pendingJoinId && pendingJoinId !== state.familyId) {
+      const pendingJoinName = sessionStorage.getItem('fp_pending_join_name') || '';
+      setTimeout(() => showFamilySwitchConfirm(pendingJoinId, pendingJoinName), 500);
+    } else if (pendingJoinId) {
+      // Link zeigt auf die eigene, bereits aktive Familie -> einfach ignorieren
+      sessionStorage.removeItem('fp_pending_join_id');
+      sessionStorage.removeItem('fp_pending_join_name');
+      sessionStorage.removeItem('fp_pending_join_token');
+    }
+
     const fib = document.getElementById('family-info-bar');
     const fnd = document.getElementById('family-name-display');
     const fid = document.getElementById('family-id-display');
