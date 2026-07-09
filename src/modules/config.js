@@ -54,8 +54,8 @@ export const APP_STORE_URL = null;
 
 // ── LEMON SQUEEZY ────────────────────────────────────────────
 export const LS_CHECKOUT = {
-  monthly: 'https://famiplan.lemonsqueezy.com/checkout/buy/fdce8540-8258-45c1-9305-d6bbd5cb6c23',
-  yearly:  'https://famiplan.lemonsqueezy.com/checkout/buy/c7cb0518-dff0-407a-b299-f1ff6df19655',
+  monthly: 'https://famiplan.lemonsqueezy.com/checkout/buy/a3a14b72-9207-40a7-9ee0-684f4410a256',
+  yearly:  'https://famiplan.lemonsqueezy.com/checkout/buy/6d5fbc79-cecd-4da1-9c25-acf9f7dc42bd',
 };
 
 // ── DATE / TIME ──────────────────────────────────────────────
