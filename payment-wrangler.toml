@@ -1,3 +1,6 @@
 name = "famiplan-payment"
 main = "payment-worker.js"
 compatibility_date = "2024-01-01"
+
+[vars]
+FIREBASE_DB_URL = "https://family-task-2cacf-default-rtdb.europe-west1.firebasedatabase.app"
