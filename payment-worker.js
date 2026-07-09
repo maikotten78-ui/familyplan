@@ -179,7 +179,15 @@ export default {
 
       let valid = false;
       try {
-        valid = await verifySignature(env.LEMONSQUEEZY_SIGNING_SECRET, rawBody, signature);
+        // Sowohl Test- als auch Live-Modus-Webhook pruefen (unterschiedliche
+        // Signing Secrets), damit beide parallel funktionieren, ohne bei
+        // jedem Wechsel das Cloudflare-Secret manuell umstellen zu muessen.
+        if (env.LEMONSQUEEZY_SIGNING_SECRET) {
+          valid = await verifySignature(env.LEMONSQUEEZY_SIGNING_SECRET, rawBody, signature);
+        }
+        if (!valid && env.LEMONSQUEEZY_SIGNING_SECRET_LIVE) {
+          valid = await verifySignature(env.LEMONSQUEEZY_SIGNING_SECRET_LIVE, rawBody, signature);
+        }
       } catch (e) {
         log(`Signaturpruefung fehlgeschlagen: ${e.message}`);
         return jsonResponse({ error: "Signature verification failed" }, 401);
