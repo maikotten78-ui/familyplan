@@ -66,7 +66,7 @@ export async function loadUserPlan() {
     if (state.familyId) {
       const ra     = await fbFetch(`${DB_ROOT}/familyAccess/${state.familyId}.json`);
       const access = await ra.json();
-      if (access && access.granted) { setPlan('granted'); return; }
+      if (access && access.granted) { setPlan('granted', access); return; }
     }
 
     // 2. Persönlicher Plan

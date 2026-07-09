@@ -1108,7 +1108,12 @@ export function _mealOptCbChange(input) {
 function buildPlanSection() {
   const plan = state._verifiedPlan;
   if (plan === 'premium' || plan === 'granted') {
-    const label  = plan === 'granted' ? 'Freizugang' : 'Premium';
+    // 'granted' deckt sowohl echte LemonSqueezy-Zahlungen (familyAccess,
+    // grantedBy: 'lemonsqueezy-webhook') als auch manuelle Admin-Freischaltungen
+    // (z.B. Beta-Tester) ab - fuer zahlende Kunden soll "Premium" stehen,
+    // nicht "Freizugang" (wirkt sonst wie ein Geschenk statt einer Zahlung).
+    const isPaid = plan === 'premium' || state.userPlanData?.grantedBy === 'lemonsqueezy-webhook';
+    const label  = isPaid ? 'Premium' : 'Freizugang';
     const expiry = state.userPlanData?.premium?.currentPeriodEnd
       ? new Date(state.userPlanData.premium.currentPeriodEnd).toLocaleDateString('de', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null;
     return `<div style="width:100%;margin-top:10px;background:linear-gradient(135deg,#5C4EE5,#764ba2);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
