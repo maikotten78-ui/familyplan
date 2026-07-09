@@ -118,8 +118,22 @@ export async function checkRateLimit(action) {
 }
 
 // ── CHECKOUT ─────────────────────────────────────────────────
+// WICHTIG (Fix 09.07.2026): family_id muss als LemonSqueezy Custom-Data
+// im Checkout-Link mitgegeben werden - sonst weiss der Payment-Webhook
+// nach erfolgreicher Zahlung nicht, welche Familie freigeschaltet werden
+// soll (siehe payment-worker.js, handleWebhook()). uid/email werden
+// zusaetzlich mitgegeben, um Zahlungen im Zweifel einem Account statt nur
+// einer Familie zuordnen zu koennen (Support/Audit), aktuell nicht von
+// der App ausgewertet.
 export function openCheckout(plan) {
-  window.open(LS_CHECKOUT[plan], '_blank');
+  const { familyId, currentAuthUser } = state;
+  const base = LS_CHECKOUT[plan];
+  if (!base) return;
+  const url = new URL(base);
+  if (familyId) url.searchParams.set('checkout[custom][family_id]', familyId);
+  if (currentAuthUser?.uid)   url.searchParams.set('checkout[custom][uid]', currentAuthUser.uid);
+  if (currentAuthUser?.email) url.searchParams.set('checkout[email]', currentAuthUser.email);
+  window.open(url.toString(), '_blank');
 }
 
 
