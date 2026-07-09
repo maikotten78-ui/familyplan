@@ -121,7 +121,7 @@ export async function obCreateFamily() {
     });
   }).catch(() => {});
 
-  obGoTo(5);
+  obGoTo(3);
 }
 
 // ── JOIN FAMILY ───────────────────────────────────────────────
@@ -169,7 +169,7 @@ export async function obJoinFamily() {
       window.history.replaceState({}, '', window.location.pathname);
       await saveUserFamily();
       if (errEl) errEl.textContent = '';
-      obGoTo(5);
+      obGoTo(3);
       return;
     }
 
@@ -194,7 +194,7 @@ export async function obJoinFamily() {
     window.history.replaceState({}, '', window.location.pathname);
     await saveUserFamily();  // erst NACH erfolgreicher Prüfung speichern
     if (errEl) errEl.textContent = '';
-    obGoTo(5);
+    obGoTo(3);
   } catch (e) { if (errEl) errEl.textContent = 'Fehler beim Verbinden.'; }
 }
 

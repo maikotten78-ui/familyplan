@@ -4,13 +4,14 @@
 
 import { PREMIUM_ENABLED, APP_STORE_URL } from './modules/config.js';
 import { state, setState } from './modules/state.js';
-import { syncPublicFamily, ensureFamilyInIndex } from './modules/firebase.js';
+import { syncPublicFamily, ensureFamilyInIndex, fbGet } from './modules/firebase.js';
 import { clearFamilyCache } from './modules/cache.js';
 import { escapeHtml, escapeAttr, localISO } from './modules/utils.js';
 
 // Auth
 import { initFirebaseAuth, showAuthScreen, showAuthScreenDirect,
          authSetMode, authSubmit, authGoogle, authForgotPassword,
+         authTogglePasswordVisibility,
          proceedAfterAuth, saveUserFamily, authSignOut,
          deleteAccount, showDeleteAccountModal } from './modules/auth.js';
 
@@ -610,6 +611,7 @@ window._app = {
   startTabTour,
   getTab: () => state.tab,
   authSetMode, authSubmit, authGoogle, authForgotPassword,
+  authTogglePasswordVisibility,
   authSignOut: () => authSignOut(),
   deleteAccount: () => deleteAccount(showSync, closeModal, () => {}),
   renameMember:   (o,n,e)  => renameMember(o,n,e,renderContent),
@@ -1262,9 +1264,33 @@ export function appInit() {
         // Push-Seite – wird in Phase 5 implementiert
       }
     } else {
-      loadMembers(renderContent, _showAddMember).then(() => {
+      // Kein lokal gespeicherter Nutzer (z.B. neues Geraet, geleerter
+      // Browser-Cache, App neu installiert) - vor der Namensauswahl erst
+      // die serverseitige Account-Bindung pruefen (memberUids/{uid},
+      // gesetzt via bindMemberUid() bei der Profil-Erstellung). Existiert
+      // sie und das gebundene Profil noch, automatisch anmelden statt
+      // erneut nach dem Profil zu fragen.
+      const uid = state.currentAuthUser?.uid;
+      loadMembers(renderContent, _showAddMember).then(async () => {
         loadAll();
-        if (state.members.length > 0) showNameScreen();
+        let boundName = null;
+        if (uid) {
+          try {
+            const binding = await fbGet(`memberUids/${uid}`);
+            if (binding && binding.name && state.members.includes(binding.name)) boundName = binding.name;
+          } catch (e) { /* non-kritisch, faellt auf Namensauswahl zurueck */ }
+        }
+        if (boundName) {
+          const ns = document.getElementById('name-screen');
+          if (ns) ns.remove();
+          setState({ curUser: boundName, boardLastSeen: parseInt(localStorage.getItem('fp_board_seen') || '0') });
+          try { localStorage.setItem('fp_user', boundName); } catch {}
+          subscribeToTasks(renderContent, loadComments);
+          loadShopping(renderContent);
+          loadComments(); loadPhotos(); loadMeals(renderContent);
+        } else if (state.members.length > 0) {
+          showNameScreen();
+        }
       });
     }
   }

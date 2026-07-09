@@ -134,6 +134,24 @@ export function authSetMode(mode) {
   if (sub) sub.textContent = mode === 'login' ? 'Melde dich an um fortzufahren' : 'Erstelle deinen Account';
   const pw = document.getElementById('auth-password');
   if (pw && mode === 'register') pw.autocomplete = 'new-password';
+  const confirmGroup = document.getElementById('auth-email-confirm-group');
+  const confirmInput = document.getElementById('auth-email-confirm');
+  if (confirmGroup) confirmGroup.style.display = mode === 'register' ? '' : 'none';
+  if (confirmInput && mode !== 'register') confirmInput.value = ''; // beim Zurueckwechseln zu "Anmelden" zuruecksetzen
+}
+
+// ── PASSWORT SICHTBARKEIT UMSCHALTEN ────────────────────────────
+const EYE_OPEN   = '<path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/>';
+const EYE_CLOSED = '<path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/><line x1="2.5" y1="17.5" x2="17.5" y2="2.5"/>';
+export function authTogglePasswordVisibility() {
+  const pw  = document.getElementById('auth-password');
+  const eye = document.getElementById('auth-pw-eye');
+  const btn = document.getElementById('auth-pw-toggle');
+  if (!pw || !eye) return;
+  const showing = pw.type === 'text';
+  pw.type = showing ? 'password' : 'text';
+  eye.innerHTML = showing ? EYE_OPEN : EYE_CLOSED;
+  if (btn) btn.setAttribute('aria-label', showing ? 'Passwort anzeigen' : 'Passwort verbergen');
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────
@@ -144,6 +162,13 @@ export async function authSubmit() {
   const err      = document.getElementById('auth-err');
 
   if (!email || !password) { if (err) err.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
+
+  if (state.authMode === 'register') {
+    const emailConfirm = document.getElementById('auth-email-confirm')?.value.trim();
+    if (!emailConfirm) { if (err) err.textContent = 'Bitte E-Mail zur Bestätigung erneut eingeben'; return; }
+    if (email.toLowerCase() !== emailConfirm.toLowerCase()) { if (err) err.textContent = 'E-Mail-Adressen stimmen nicht überein'; return; }
+  }
+
   if (btn) { btn.disabled = true; btn.textContent = 'Bitte warten…'; }
   if (err) err.textContent = '';
 

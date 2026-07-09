@@ -1100,8 +1100,17 @@
     <div id="auth-form">
       <label class="auth-label">E-Mail</label>
       <input class="auth-input" id="auth-email" type="email" placeholder="deine@email.de" autocomplete="email"/>
+      <div id="auth-email-confirm-group" style="display:none">
+        <label class="auth-label">E-Mail bestätigen</label>
+        <input class="auth-input" id="auth-email-confirm" type="email" placeholder="deine@email.de" autocomplete="email"/>
+      </div>
       <label class="auth-label">Passwort</label>
-      <input class="auth-input" id="auth-password" type="password" placeholder="Passwort" autocomplete="current-password"/>
+      <div style="position:relative">
+        <input class="auth-input" id="auth-password" type="password" placeholder="Passwort" autocomplete="current-password" style="padding-right:44px"/>
+        <button type="button" id="auth-pw-toggle" onclick="window._app.authTogglePasswordVisibility()" aria-label="Passwort anzeigen" style="position:absolute;right:8px;top:0;bottom:8px;margin:auto 0;height:24px;background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);display:flex;align-items:center">
+          <svg id="auth-pw-eye" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 10s3-6 9-6 9 6 9 6-3 6-9 6-9-6-9-6z"/><circle cx="10" cy="10" r="2.5"/></svg>
+        </button>
+      </div>
       <div class="auth-err" id="auth-err"></div>
       <button class="auth-btn" id="auth-submit-btn" onclick="window._app.authSubmit()">Anmelden</button>
       <div style="text-align:center;margin-top:10px"><button onclick="window._app.authForgotPassword()" style="background:none;border:none;color:#5C4EE5;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;padding:4px" id="forgot-pw-btn">Passwort vergessen?</button></div>
