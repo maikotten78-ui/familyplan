@@ -3,7 +3,7 @@
 // Task-Formular, Meal-Modal, User-Modal, Board-New-Modal
 // ══════════════════════════════════════════════════════════════
 
-import { TASK_EMOJIS, COLORS, DAYS, WDS, MEAL_EMOJIS, PREMIUM_ENABLED } from '../modules/config.js';
+import { TASK_EMOJIS, COLORS, DAYS, WDS, MEAL_EMOJIS, PREMIUM_ENABLED, APP_STORE_URL } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, isoFromDay, escapeHtml, escapeAttr, calcDurMins, endTimeFromDur, calcDur } from '../modules/utils.js';
 import { getA } from '../modules/tasks.js';
@@ -1126,6 +1126,15 @@ function buildPlanSection() {
 }
 
 export function showUserModal() {
+  // App-Store-Hinweis: nur iOS-Web (nicht die native App selbst), nur
+  // sobald die App im Store gelistet ist (APP_STORE_URL gesetzt, siehe
+  // config.js). Dauerhaft im Menue verfuegbar, falls der einmalige
+  // Hinweis nach der Registrierung (showInstallPrompt) weggewischt wurde.
+  let isNativeApp = false;
+  try { isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch (e) {}
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const showAppStoreLink = isIOS && !isNativeApp && !!APP_STORE_URL;
+
   const btns = state.members.map(m => {
     const av = state.photos?.[m]
       ? `<img src="${state.photos[m]}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">`
@@ -1164,6 +1173,7 @@ export function showUserModal() {
     <button style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showPushPage(),400)">🔔 Benachrichtigungen</button>
     ${window._app.isCalendarSyncSupported && window._app.isCalendarSyncSupported() ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showCalendarSyncPage(),400)">🗓️ Apple Kalender</button>` : ''}
     <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showConnectedAccountsModal(),400)">👥 Verbundene Accounts</button>
+    ${showAppStoreLink ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window.location.href='${APP_STORE_URL}'">📲 App aus dem App Store laden</button>` : ''}
     <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#FEF2F2;color:#DC2626;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.authSignOut()">🚪 Abmelden</button>
     <button style="width:100%;margin-top:6px;padding:9px;border:none;border-radius:10px;background:none;color:var(--text3);font-weight:500;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.showDeleteAccountModal()">Account löschen</button>
     ${isAdmin() ? `<button style="width:100%;margin-top:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:#5C4EE5;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showAdminPanel()">🛡 Admin-Panel</button>` : ''}

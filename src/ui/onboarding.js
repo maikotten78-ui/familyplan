@@ -3,7 +3,7 @@
 // Onboarding-Flow, Family-Setup, Install-Prompt, FAB, shareInviteLink
 // ══════════════════════════════════════════════════════════════
 
-import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS, APP_URL } from '../modules/config.js';
+import { DB_ROOT, DEFAULT_EMOJIS, PUSH_WORKER_URL, ADMIN_FAMILY_ID, ADMIN_UIDS, APP_URL, APP_STORE_URL } from '../modules/config.js';
 import { state, setState } from '../modules/state.js';
 import { localISO, jd2i, dayFromISO, genFamilyId, genInviteToken } from '../modules/utils.js';
 import { fbFetch, fbSet, syncPublicFamily, getAuthToken } from '../modules/firebase.js';
@@ -465,6 +465,32 @@ export function showInstallPrompt(_retryCount = 0) {
   const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isAndroid = /android/i.test(navigator.userAgent);
   const platform  = isIOS ? 'iPhone/iPad' : isAndroid ? 'Android' : 'Desktop';
+
+  // iOS: sobald die App im App Store gelistet ist (APP_STORE_URL gesetzt),
+  // dahin verweisen statt "Zum Home-Bildschirm hinzufuegen" zu zeigen.
+  // Ehrlicher Grund statt reiner Werbung: Push-Benachrichtigungen sind in
+  // der nativen App zuverlaessiger als in der Web-Version auf iOS (Safari
+  // unterstuetzt Web-Push nur eingeschraenkt).
+  if (isIOS && APP_STORE_URL) {
+    setTimeout(() => {
+      if (state.modalEl) {
+        if (_retryCount < 5) setTimeout(() => showInstallPrompt(_retryCount + 1), 1500);
+        return;
+      }
+      localStorage.setItem('fp_install_shown', '1');
+      openModal(`
+        <div class="modal-handle"></div>
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:48px;margin-bottom:8px">📲</div>
+          <div class="modal-title">Hol dir die App</div>
+          <div class="modal-sub">Erinnerungen kommen in der App zuverlässiger an als im Browser.</div>
+        </div>
+        <button class="submit-btn" onclick="window.location.href='${APP_STORE_URL}'">Im App Store öffnen</button>
+        <button class="modal-close" onclick="window._app.closeModal()">Später</button>
+      `);
+    }, 1000);
+    return;
+  }
 
   let steps = '';
   if (isIOS) {
