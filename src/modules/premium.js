@@ -133,6 +133,10 @@ export function openCheckout(plan) {
   if (familyId) url.searchParams.set('checkout[custom][family_id]', familyId);
   if (currentAuthUser?.uid)   url.searchParams.set('checkout[custom][uid]', currentAuthUser.uid);
   if (currentAuthUser?.email) url.searchParams.set('checkout[email]', currentAuthUser.email);
+  // Deutschland als Standard-Rechnungsland vorbelegen (famiplan ist eine
+  // deutschsprachige App) - Kunde kann es im Checkout weiterhin aendern,
+  // z.B. fuer Oesterreich/Schweiz.
+  url.searchParams.set('checkout[billing_address][country]', 'DE');
   window.open(url.toString(), '_blank');
 }
 
