@@ -1348,7 +1348,14 @@ export function showUpgradeModal(context = 'general') {
       1,99 € / Monat
     </button>
 
-    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px">Jederzeit kündbar · Sichere Zahlung via LemonSqueezy</div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px">${
+      window._app.isRevenueCatSupported()
+        ? 'Jederzeit kündbar · Zahlung über deine Apple-ID'
+        : 'Jederzeit kündbar · Sichere Zahlung via LemonSqueezy'
+    }</div>
+    ${window._app.isRevenueCatSupported() ? `
+    <button style="width:100%;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit;padding:4px;margin-bottom:4px" onclick="window._app.restorePurchasesFlow()">Käufe wiederherstellen</button>
+    ` : ''}
     <button class="modal-close" onclick="window._app.closeModal()">Vielleicht später</button>
   `);
 }

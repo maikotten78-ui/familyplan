@@ -263,7 +263,7 @@ export function authErrorMessage(code) {
 // ── PROCEED AFTER AUTH ────────────────────────────────────────
 // Wird nach erfolgreichem Login aufgerufen.
 // Lädt Familie aus Firebase-Profil, verhindert Familie-Vererbung zwischen Accounts.
-export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
+export async function proceedAfterAuth(appInit, loadUserPlan, setPlan, initRevenueCat) {
   // KRITISCH: alte Listener trennen bevor neue Familie geladen wird
   // Verhindert dass Daten der alten Familie nach Familienwechsel sichtbar bleiben
   unsubscribeAll();
@@ -371,6 +371,12 @@ export async function proceedAfterAuth(appInit, loadUserPlan, setPlan) {
   try {
     await Promise.race([loadUserPlan(), new Promise(r => setTimeout(r, 3000))]);
   } catch (e) { setPlan('free'); }
+
+  // RevenueCat-Login (iOS, no-op auf Web) - bewusst NICHT awaited, damit ein
+  // langsames/fehlerhaftes RevenueCat-Setup den App-Start nicht verzoegert.
+  // Setzt Purchases.logIn(familyId), damit spaetere Kaeufe/Restores der
+  // richtigen Familie zugeordnet werden.
+  if (typeof initRevenueCat === 'function') initRevenueCat().catch(() => {});
 
   // Hide auth + family screens before appInit
   const authEl   = document.getElementById('auth-screen');

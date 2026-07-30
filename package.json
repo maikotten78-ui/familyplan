@@ -17,6 +17,7 @@
     "@capacitor/ios": "^7.6.7",
     "@capacitor/push-notifications": "^7.0.7",
     "@ebarooni/capacitor-calendar": "^7.2.0",
-    "@fivesheepco/cloudflare-apns2": "^13.0.0"
+    "@fivesheepco/cloudflare-apns2": "^13.0.0",
+    "@revenuecat/purchases-capacitor": "^10.0.0"
   }
 }

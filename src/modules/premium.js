@@ -1,6 +1,7 @@
 import { DB_ROOT, PREMIUM_ENABLED, ADMIN_UIDS, LS_CHECKOUT } from './config.js';
 import { state, setState } from './state.js';
 import { fbFetch } from './firebase.js';
+import { isRevenueCatSupported, purchasePlan, restorePurchases } from './revenuecat.js';
 
 // ── ADMIN CHECK ───────────────────────────────────────────────
 export function isAdmin() {
@@ -118,6 +119,21 @@ export async function checkRateLimit(action) {
 }
 
 // ── CHECKOUT ─────────────────────────────────────────────────
+// WICHTIG (Compliance, Guideline 3.1.3(b), Entscheidung 10.07.2026):
+// Auf iOS (native App) ist Apple IAP via RevenueCat die EINZIGE erlaubte
+// Kaufoption - der LemonSqueezy-Weg darf dort nicht mehr angezeigt oder
+// ausgeloest werden. Auf der Web-App bleibt LemonSqueezy unveraendert
+// bestehen. openCheckout() trennt das automatisch nach Plattform, damit
+// modals.js selbst keine Plattform-Logik kennen muss.
+export async function openCheckout(plan) {
+  if (isRevenueCatSupported()) {
+    await purchaseViaRevenueCat(plan);
+    return;
+  }
+  openLemonSqueezyCheckout(plan);
+}
+
+// ── WEB: LEMONSQUEEZY (unveraendert) ────────────────────────────
 // WICHTIG (Fix 09.07.2026): family_id muss als LemonSqueezy Custom-Data
 // im Checkout-Link mitgegeben werden - sonst weiss der Payment-Webhook
 // nach erfolgreicher Zahlung nicht, welche Familie freigeschaltet werden
@@ -125,7 +141,7 @@ export async function checkRateLimit(action) {
 // zusaetzlich mitgegeben, um Zahlungen im Zweifel einem Account statt nur
 // einer Familie zuordnen zu koennen (Support/Audit), aktuell nicht von
 // der App ausgewertet.
-export function openCheckout(plan) {
+function openLemonSqueezyCheckout(plan) {
   const { familyId, currentAuthUser } = state;
   const base = LS_CHECKOUT[plan];
   if (!base) return;
@@ -138,6 +154,56 @@ export function openCheckout(plan) {
   // z.B. fuer Oesterreich/Schweiz.
   url.searchParams.set('checkout[billing_address][country]', 'DE');
   window.open(url.toString(), '_blank');
+}
+
+// ── iOS: REVENUECAT / APPLE IAP ──────────────────────────────────
+// Optimistisches UI-Update direkt nach client-seitig bestaetigtem Kauf
+// (RevenueCat/StoreKit-Antwort), damit die App sofort freigeschaltet
+// wirkt. Die eigentliche Wahrheitsquelle bleibt Firebase
+// (familyAccess/{familyId}), gesetzt vom serverseitig verifizierten
+// revenuecat-worker.js per Webhook - loadUserPlan() gleicht das nach
+// wenigen Sekunden ab, damit auch andere Geraete/die Web-App den neuen
+// Status sehen.
+async function purchaseViaRevenueCat(plan) {
+  const { showSync, closeModal } = await import('../ui/modal.js');
+  showSync('Kauf wird verarbeitet…');
+  const result = await purchasePlan(plan);
+
+  if (result.cancelled) {
+    return; // Nutzer hat abgebrochen - keine Fehlermeldung noetig
+  }
+  if (!result.success) {
+    showSync(`Kauf fehlgeschlagen: ${result.error || 'Unbekannter Fehler'}`);
+    return;
+  }
+
+  setPlan('premium', { source: 'revenuecat', activatedAt: Date.now() });
+  showSync('✓ famiplan Plus aktiviert!');
+  closeModal();
+  // Firebase-Abgleich nach kurzer Verzoegerung, damit der RevenueCat-
+  // Webhook (asynchron, meist 5-60s laut RevenueCat-Doku) Zeit hat,
+  // familyAccess/{familyId} zu setzen.
+  setTimeout(() => { loadUserPlan(); }, 8000);
+}
+
+// ── RESTORE PURCHASES (Pflicht fuer App-Review, iOS-only) ────────
+export async function restorePurchasesFlow() {
+  if (!isRevenueCatSupported()) return;
+  const { showSync } = await import('../ui/modal.js');
+  showSync('Käufe werden wiederhergestellt…');
+  const result = await restorePurchases();
+
+  if (!result.success) {
+    showSync(`Wiederherstellung fehlgeschlagen: ${result.error || 'Unbekannter Fehler'}`);
+    return;
+  }
+  if (result.restored) {
+    setPlan('premium', { source: 'revenuecat-restore', activatedAt: Date.now() });
+    showSync('✓ Kauf wiederhergestellt!');
+    setTimeout(() => { loadUserPlan(); }, 8000);
+  } else {
+    showSync('Kein früherer Kauf gefunden.');
+  }
 }
 
 

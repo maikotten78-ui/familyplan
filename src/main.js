@@ -44,7 +44,9 @@ import { loadBoard, updateBoardBadge, boardToggleReaction,
 
 // Premium
 import { isPremiumActive, setPlan, loadUserPlan,
-         renderTrialBanner, checkRateLimit, openCheckout } from './modules/premium.js';
+         renderTrialBanner, checkRateLimit, openCheckout,
+         restorePurchasesFlow } from './modules/premium.js';
+import { initRevenueCat, isRevenueCatSupported } from './modules/revenuecat.js';
 
 // UI
 import { openModal, closeModal, showSync } from './ui/modal.js';
@@ -929,6 +931,8 @@ window._app = {
       setTimeout(() => document.getElementById('board-ri-' + postId)?.focus(), 100);
   },
   openCheckout,
+  restorePurchasesFlow,
+  isRevenueCatSupported,
   setTodayView:    (v) => { setState({todayView:v}); renderContent(); },
   setTodayTimeline:(v) => { setState({todayTimeline:v}); renderContent(); },
   _toggleTodaySection: (key) => {
@@ -1355,7 +1359,7 @@ if ('serviceWorker' in navigator) {
 // ── BOOT ─────────────────────────────────────────────────────
 initBottomNavFix();
 initFirebaseAuth(
-  () => proceedAfterAuth(appInit, loadUserPlan, setPlan),
+  () => proceedAfterAuth(appInit, loadUserPlan, setPlan, initRevenueCat),
   showAuthScreen
 );
 

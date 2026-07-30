@@ -52,10 +52,24 @@ export const APP_URL = 'https://famiplan.app';
 // (siehe captureInviteLinkIntent() in main.js).
 export const APP_STORE_URL = null;
 
-// ── LEMON SQUEEZY ────────────────────────────────────────────
+// ── LEMON SQUEEZY (Web-Checkout, siehe premium.js openCheckout()) ──
 export const LS_CHECKOUT = {
   monthly: 'https://famiplan.lemonsqueezy.com/checkout/buy/a3a14b72-9207-40a7-9ee0-684f4410a256',
   yearly:  'https://famiplan.lemonsqueezy.com/checkout/buy/6d5fbc79-cecd-4da1-9c25-acf9f7dc42bd',
+};
+
+// ── REVENUECAT (iOS In-App-Kauf, siehe revenuecat.js) ──────────
+// WICHTIG (Compliance, Guideline 3.1.3(b)): Auf iOS wird AUSSCHLIESSLICH
+// dieser Weg genutzt, LS_CHECKOUT darf dort nie angezeigt/beworben
+// werden - der Web-Checkout bleibt exklusiv der Web-App vorbehalten.
+// Public SDK Key aus RevenueCat -> Project Settings -> API Keys
+// (Apple App Store Key, beginnt i.d.R. mit "appl_"). Ist kein Geheimnis,
+// darf im Client-Code stehen (wie ein Firebase-API-Key).
+export const REVENUECAT_API_KEY_IOS = 'test_gbwutLJmnHKoGZKpfmeiyhKpaDB'; // TODO: durch echten "appl_..."-Key ersetzen, siehe RevenueCat-Dashboard
+export const REVENUECAT_ENTITLEMENT_ID = 'famiplan Pro';
+export const REVENUECAT_PRODUCT_IDS = {
+  monthly: 'app.famiplan.app.plus.monthly',
+  yearly:  'app.famiplan.app.plus.yearly',
 };
 
 // ── DATE / TIME ──────────────────────────────────────────────
