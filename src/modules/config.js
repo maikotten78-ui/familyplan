@@ -65,7 +65,7 @@ export const LS_CHECKOUT = {
 // Public SDK Key aus RevenueCat -> Project Settings -> API Keys
 // (Apple App Store Key, beginnt i.d.R. mit "appl_"). Ist kein Geheimnis,
 // darf im Client-Code stehen (wie ein Firebase-API-Key).
-export const REVENUECAT_API_KEY_IOS = 'test_gbwutLJmnHKoGZKpfmeiyhKpaDB'; // TODO: durch echten "appl_..."-Key ersetzen, siehe RevenueCat-Dashboard
+export const REVENUECAT_API_KEY_IOS = 'appl_xTrDOKFHGcevgCaHNpGJQCVKkjZ';
 export const REVENUECAT_ENTITLEMENT_ID = 'famiplan Pro';
 export const REVENUECAT_PRODUCT_IDS = {
   monthly: 'app.famiplan.app.plus.monthly',
