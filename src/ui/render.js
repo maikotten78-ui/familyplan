@@ -1179,6 +1179,7 @@ export function renderBoard() {
   }
 
   // Board-Posts
+  html += `<div id="board-posts-anchor" style="scroll-margin-top:16px"></div>`;
   html += `<button class="board-new-btn" onclick="window._app.showBoardNewModal()">📌 Etwas teilen…</button>`;
   const posts = Object.entries(state.boardPosts).sort((a, b) => b[1].ts - a[1].ts);
   if (!posts.length) {

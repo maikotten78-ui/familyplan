@@ -8,18 +8,29 @@ export async function loadBoard(renderContent, updateBoardBadge) {
   if (!state.familyId || localStorage.getItem('fp_demo_mode') === '1') return;
   state._boardLastVisible = Date.now();
 
+  let isFirstLoad = true; // beim allerersten Laden nichts als "neu" toasten
+
   // Einmalig laden + dann alle 5 Sekunden pollen
   const doLoad = async () => {
     if (!state.currentAuthUser) return;
     try {
+      const oldPosts = state.boardPosts || {};
       const data = await fbGet('board');
       const newStr = JSON.stringify(data || {});
-      if (newStr !== JSON.stringify(state.boardPosts)) {
+      if (newStr !== JSON.stringify(oldPosts)) {
+        // Neue Beiträge von anderen erkennen (nicht beim ersten Laden)
+        if (!isFirstLoad && state.tab === 'overview') {
+          const newPosts = Object.entries(data || {})
+            .filter(([id, p]) => !oldPosts[id] && p.author !== state.curUser)
+            .sort((a, b) => b[1].ts - a[1].ts);
+          if (newPosts.length) showBoardToast(newPosts[0][1]);
+        }
         setState({ boardPosts: data || {} });
         updateBoardBadge();
         if (state.tab === 'overview') renderContent();
       }
       if (state.tab === 'overview') boardMarkPostsRead();
+      isFirstLoad = false;
     } catch (e) {
       console.warn('loadBoard error (boardPosts preserved):', e.message);
     }
@@ -31,6 +42,32 @@ export async function loadBoard(renderContent, updateBoardBadge) {
     window._boardPoll = true;
     window._boardPollId = setInterval(doLoad, 5000);
   }
+}
+
+// ── TOAST FÜR NEUE BOARD-NACHRICHTEN ────────────────────────────
+export function showBoardToast(post) {
+  document.getElementById('board-toast')?.remove();
+  const av    = state.av?.[post.author] || '👤';
+  const text  = post.photo && !post.text ? '📷 Foto geteilt' : (post.text || '').slice(0, 60);
+  const toast = document.createElement('div');
+  toast.id = 'board-toast';
+  toast.className = 'board-toast';
+  toast.innerHTML = `
+    <div class="board-toast-av">${state.photos?.[post.author] ? `<img src="${state.photos[post.author]}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : av}</div>
+    <div style="flex:1;min-width:0">
+      <div class="board-toast-author">${escapeHtml(post.author)}</div>
+      <div class="board-toast-text">${escapeHtml(text)}</div>
+    </div>`;
+  toast.onclick = () => {
+    toast.remove();
+    document.getElementById('board-posts-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4500);
 }
 
 // ── BADGE ─────────────────────────────────────────────────────
