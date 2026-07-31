@@ -30,13 +30,13 @@ export function showCalendarSyncPage() {
 
   const overlay = document.createElement('div');
   overlay.id    = 'calendar-sync-page';
-  overlay.style.cssText = 'position:fixed;inset:0;background:#5C4EE5;z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(env(safe-area-inset-top),48px) 20px max(env(safe-area-inset-bottom,0px),80px);';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#1D7A87;z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(env(safe-area-inset-top),48px) 20px max(env(safe-area-inset-bottom,0px),80px);';
 
   const optedIn  = isCalendarSyncEnabledByUser();
   const premium  = isPremiumActive();
   const lastSync = getLastSyncTime();
 
-  const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#5C4EE5' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
+  const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#1D7A87' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
   const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block;pointer-events:none"></span>`;
 
   overlay.innerHTML = `
@@ -46,10 +46,10 @@ export function showCalendarSyncPage() {
     </div>
 
     ${!premium ? `
-    <div onclick="window._app.showUpgradeModal('calendarSync')" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid #c7d2fe;border-radius:12px;padding:14px;margin-bottom:16px;cursor:pointer">
+    <div onclick="window._app.showUpgradeModal('calendarSync')" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid #8FDCE3;border-radius:12px;padding:14px;margin-bottom:16px;cursor:pointer">
       <span style="font-size:18px">🔒</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#5C4EE5">Plus-Feature</div><div style="font-size:11px;color:var(--text2)">Apple Kalender Sync ist Teil von famiplan Plus</div></div>
-      <span style="color:#5C4EE5;font-size:14px">›</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#1D7A87">Plus-Feature</div><div style="font-size:11px;color:var(--text2)">Apple Kalender Sync ist Teil von famiplan Plus</div></div>
+      <span style="color:#1D7A87;font-size:14px">›</span>
     </div>` : ''}
 
     <div style="background:var(--surface);border-radius:16px;padding:18px;margin-bottom:16px">
@@ -73,7 +73,7 @@ export function showCalendarSyncPage() {
 
     <div style="background:var(--surface);border-radius:16px;padding:18px;margin-bottom:16px;text-align:center">
       <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${fmtLastSync(lastSync)}</div>
-      <button id="cal-sync-now-btn" ${!optedIn ? 'disabled' : ''} style="width:100%;padding:13px;border:none;border-radius:12px;background:${optedIn ? '#5C4EE5' : '#D1D5DB'};color:white;font-weight:700;font-size:14px;cursor:${optedIn ? 'pointer' : 'not-allowed'};font-family:inherit">
+      <button id="cal-sync-now-btn" ${!optedIn ? 'disabled' : ''} style="width:100%;padding:13px;border:none;border-radius:12px;background:${optedIn ? '#1D7A87' : '#D1D5DB'};color:white;font-weight:700;font-size:14px;cursor:${optedIn ? 'pointer' : 'not-allowed'};font-family:inherit">
         Jetzt synchronisieren
       </button>
       <div id="cal-sync-status" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:16px"></div>

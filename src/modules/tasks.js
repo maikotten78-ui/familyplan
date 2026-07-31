@@ -18,7 +18,7 @@ export function normalizeTask(id, t) {
     date:            isOpen ? (t.date || null) : (t.date || isoFromDay(t.day || 'Montag')),
     time:            t.time || '12:00',
     endTime:         t.endTime || '',
-    color:           t.color || '#667eea',
+    color:           t.color || '#1D7A87',
     recurring:       t.recurring || 'once',
     recurringInterval: t.recurringInterval || 1,
     weekdays:        t.weekdays || [],

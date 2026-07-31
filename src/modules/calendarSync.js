@@ -93,7 +93,7 @@ async function ensureFamiplanCalendar(plugin) {
   const { result: calendars } = await plugin.listCalendars();
   const existing = (calendars || []).find(c => c.title === SYNC_CALENDAR_NAME);
   if (existing) { _famiplanCalendarId = existing.id; return existing.id; }
-  const { id } = await plugin.createCalendar({ title: SYNC_CALENDAR_NAME, color: '#5C4EE5' });
+  const { id } = await plugin.createCalendar({ title: SYNC_CALENDAR_NAME, color: '#1D7A87' });
   _famiplanCalendarId = id;
   return id;
 }
@@ -166,7 +166,7 @@ function importEventFromEventKit(ev) {
     day:          null,
     time:         ev.isAllDay ? '00:00' : `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`,
     endTime:      '',
-    color:        '#5C4EE5',
+    color:        '#1D7A87',
     recurring:    'once',
     recurringInterval: 1,
     weekdays:     [],

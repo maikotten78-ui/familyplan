@@ -189,7 +189,7 @@ function formHTML(data, isEdit) {
           <div style="font-size:14px;font-weight:600;color:var(--text1)">📋 Offene To-Do</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Kein Datum – bleibt bis zur Erledigung sichtbar</div>
         </div>
-        <div style="width:44px;height:26px;border-radius:13px;background:${data.openTodo ? '#5C4EE5' : '#D1D5DB'};position:relative;transition:background 0.2s;flex-shrink:0">
+        <div style="width:44px;height:26px;border-radius:13px;background:${data.openTodo ? '#1D7A87' : '#D1D5DB'};position:relative;transition:background 0.2s;flex-shrink:0">
           <div style="position:absolute;top:3px;left:${data.openTodo ? '21' : '3'}px;width:20px;height:20px;border-radius:50%;background:var(--surface);transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
         </div>
       </div>
@@ -234,7 +234,7 @@ function formHTML(data, isEdit) {
           <div style="font-size:14px;font-weight:600;color:var(--text1)">🌅 Ganztägig</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Kein fester Zeitpunkt</div>
         </div>
-        <div class="toggle-switch" style="background:${isAllDay ? '#5C4EE5' : '#D1D5DB'}">
+        <div class="toggle-switch" style="background:${isAllDay ? '#1D7A87' : '#D1D5DB'}">
           <div class="toggle-knob" style="left:${isAllDay ? '21' : '3'}px"></div>
         </div>
       </div>
@@ -316,7 +316,7 @@ function formHTML(data, isEdit) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-lbl" style="margin-bottom:0">Emoji</label>
         <button type="button" onclick="window._app.toggleEmojiGrid(this)"
-          style="font-size:11px;font-weight:600;color:#5C4EE5;background:var(--accent-bg);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit">
+          style="font-size:11px;font-weight:600;color:#1D7A87;background:var(--accent-bg);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit">
           ▸ Auswählen
         </button>
       </div>
@@ -480,7 +480,7 @@ export function showMealEditModal(iso, type) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-lbl" style="margin-bottom:0">Häufig gekocht</label>
         <button type="button" onclick="window._app.showRecipeManager('${iso}','${type}')"
-          style="font-size:11px;font-weight:600;color:#5C4EE5;background:var(--accent-bg);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit">
+          style="font-size:11px;font-weight:600;color:#1D7A87;background:var(--accent-bg);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit">
           📋 Alle Rezepte
         </button>
       </div>
@@ -501,7 +501,7 @@ export function showMealEditModal(iso, type) {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label class="form-lbl" style="margin-bottom:0">Gericht</label>
         <button type="button" onclick="window._app.showRecipeImportModal()"
-          style="font-size:11px;font-weight:700;color:white;background:linear-gradient(135deg,#5C4EE5,#7C6EE8);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">
+          style="font-size:11px;font-weight:700;color:white;background:linear-gradient(135deg,#1D7A87,#7C6EE8);border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">
           ✨ KI-Import
         </button>
       </div>
@@ -594,7 +594,7 @@ function _updateStepsBtn(recipe) {
   if (!btn) return;
   const hasSteps = recipe?.steps?.length > 0;
   btn.textContent = hasSteps ? `Zubereitung (${recipe.steps.length} Schritte)` : `+ Zubereitung`;
-  btn.style.color = hasSteps ? '#5C4EE5' : 'var(--text3)';
+  btn.style.color = hasSteps ? '#1D7A87' : 'var(--text3)';
 }
 
 // ── REZEPT-VERWALTUNG ──────────────────────────────────────────
@@ -680,7 +680,7 @@ export function showRecipeManager(iso, type) {
     <div class="modal-title">🍽️ Meine Rezepte</div>
     <div class="modal-sub">Gespeicherte Gerichte verwalten</div>
     <button type="button" onclick="window._app.showRecipeImportModal()"
-      style="width:100%;padding:11px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#5C4EE5,#7C6EE8);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+      style="width:100%;padding:11px 14px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D7A87,#7C6EE8);color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
       ✨ Rezept importieren (KI)
     </button>
     <div class="form-group">
@@ -774,7 +774,7 @@ export function showRecipeViewModal(key) {
       <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Zubereitung</div>
       ${recipe.steps.map((s, i) => `
         <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
-          <div style="width:26px;height:26px;border-radius:50%;background:#5C4EE5;color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#1D7A87;color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
           <div style="flex:1;font-size:14px;color:var(--text1);line-height:1.5;padding-top:3px">${escapeHtml(s)}</div>
         </div>`).join('')}
     </div>` : `<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px;margin-bottom:16px">Keine Zubereitungsschritte hinterlegt.</div>`;
@@ -813,7 +813,7 @@ export function showRecipeEditModal(key) {
 
   const stepsHTML = steps.map((s, i) => `
     <div class="recipe-step-row" id="step-row-${i}" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
-      <div style="width:24px;height:24px;border-radius:50%;background:#5C4EE5;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">${i+1}</div>
+      <div style="width:24px;height:24px;border-radius:50%;background:#1D7A87;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">${i+1}</div>
       <textarea class="form-input step-input" data-step="${i}" rows="2"
         style="flex:1;resize:none;line-height:1.5;font-size:13px"
         placeholder="Schritt ${i+1} beschreiben…">${escapeHtml(s)}</textarea>
@@ -856,7 +856,7 @@ export function showRecipeEditModal(key) {
         ${ingrHTML || '<div id="ingr-empty" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">Noch keine Zutaten</div>'}
       </div>
       <button type="button" onclick="window._app._recipeEditAddIngr()"
-        style="width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#5C4EE5;cursor:pointer;font-family:inherit;margin-bottom:4px">
+        style="width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#1D7A87;cursor:pointer;font-family:inherit;margin-bottom:4px">
         + Zutat hinzufügen
       </button>
     </div>
@@ -867,7 +867,7 @@ export function showRecipeEditModal(key) {
         ${stepsHTML || '<div id="steps-empty" style="text-align:center;padding:12px;color:var(--text3);font-size:13px">Noch keine Schritte</div>'}
       </div>
       <button type="button" onclick="window._app._recipeAddStep()"
-        style="width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#5C4EE5;cursor:pointer;font-family:inherit;margin-bottom:4px">
+        style="width:100%;padding:9px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#1D7A87;cursor:pointer;font-family:inherit;margin-bottom:4px">
         + Schritt hinzufügen
       </button>
     </div>
@@ -1116,7 +1116,7 @@ function buildPlanSection() {
     const label  = isPaid ? 'Premium' : 'Freizugang';
     const expiry = state.userPlanData?.premium?.currentPeriodEnd
       ? new Date(state.userPlanData.premium.currentPeriodEnd).toLocaleDateString('de', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null;
-    return `<div style="width:100%;margin-top:10px;background:linear-gradient(135deg,#5C4EE5,#764ba2);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+    return `<div style="width:100%;margin-top:10px;background:linear-gradient(135deg,#1D7A87,#163A5C);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px">
       <div style="font-size:28px;flex-shrink:0">⭐</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:white">famiplan Plus · ${label}</div>
@@ -1127,7 +1127,7 @@ function buildPlanSection() {
   }
 
 
-  return `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#5C4EE5;color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showUpgradeModal()">⭐ famiplan Plus</button>`;
+  return `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#1D7A87;color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showUpgradeModal()">⭐ famiplan Plus</button>`;
 }
 
 export function showUserModal() {
@@ -1160,7 +1160,7 @@ export function showUserModal() {
     <div style="margin-bottom:14px">
       ${state.familyName !== state.familyId ? `<div style="font-size:13px;font-weight:600;color:var(--text1);text-align:center;margin-bottom:2px">${escapeHtml(state.familyName)}</div>` : ''}
       <div style="font-size:10px;color:#c4c9d4;text-align:center;margin-bottom:10px;letter-spacing:0.5px">ID: ${state.familyId}</div>
-      <button onclick="window._app.shareInviteLink()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#5C4EE5,#764ba2);color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
+      <button onclick="window._app.shareInviteLink()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1D7A87,#163A5C);color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
         🔗 Familienmitglied einladen
       </button>
       <div style="font-size:10px;color:#c4c9d4;text-align:center;margin-top:6px;letter-spacing:0.5px">Teile den Link per WhatsApp, SMS oder E-Mail</div>
@@ -1173,15 +1173,15 @@ export function showUserModal() {
     ${familyInfo}
     <div class="member-grid">${btns}</div>
     ${state.members.length === 0 ? '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch keine Profile.<br>Füge das erste hinzu!</div>' : ''}
-    <button style="width:100%;margin-top:14px;padding:11px;border:1px dashed #5C4EE5;border-radius:10px;background:var(--accent-bg);color:#5C4EE5;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit" onclick="window._app.showAddMemberModal(false)">➕ Profil hinzufügen</button>
+    <button style="width:100%;margin-top:14px;padding:11px;border:1px dashed #1D7A87;border-radius:10px;background:var(--accent-bg);color:#1D7A87;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit" onclick="window._app.showAddMemberModal(false)">➕ Profil hinzufügen</button>
     ${state.curUser ? `<button class="modal-close" onclick="window._app.closeModal()">Abbrechen</button>` : ''}
-    <button style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showPushPage(),400)">🔔 Benachrichtigungen</button>
-    ${window._app.isCalendarSyncSupported && window._app.isCalendarSyncSupported() ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showCalendarSyncPage(),400)">🗓️ Apple Kalender</button>` : ''}
-    <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showConnectedAccountsModal(),400)">👥 Verbundene Accounts</button>
-    ${showAppStoreLink ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F5F3FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window.location.href='${APP_STORE_URL}'">📲 App aus dem App Store laden</button>` : ''}
+    <button style="width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:#F0FBFC;color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showPushPage(),400)">🔔 Benachrichtigungen</button>
+    ${window._app.isCalendarSyncSupported && window._app.isCalendarSyncSupported() ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F0FBFC;color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showCalendarSyncPage(),400)">🗓️ Apple Kalender</button>` : ''}
+    <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F0FBFC;color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();setTimeout(()=>window._app.showConnectedAccountsModal(),400)">👥 Verbundene Accounts</button>
+    ${showAppStoreLink ? `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#F0FBFC;color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window.location.href='${APP_STORE_URL}'">📲 App aus dem App Store laden</button>` : ''}
     <button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#FEF2F2;color:#DC2626;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit" onclick="window._app.authSignOut()">🚪 Abmelden</button>
     <button style="width:100%;margin-top:6px;padding:9px;border:none;border-radius:10px;background:none;color:var(--text3);font-weight:500;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.showDeleteAccountModal()">Account löschen</button>
-    ${isAdmin() ? `<button style="width:100%;margin-top:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:#5C4EE5;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showAdminPanel()">🛡 Admin-Panel</button>` : ''}
+    ${isAdmin() ? `<button style="width:100%;margin-top:6px;padding:9px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:#1D7A87;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showAdminPanel()">🛡 Admin-Panel</button>` : ''}
     ${PREMIUM_ENABLED ? buildPlanSection() : ''}
   `);
 }
@@ -1251,7 +1251,7 @@ export function showBoardNewModal() {
           <img id="board-photo-img" style="width:100%;height:100%;object-fit:cover">
         </div>
         <button type="button" onclick="document.getElementById('board-photo-input').click()"
-          style="flex:1;padding:10px;border:1.5px dashed #5C4EE5;border-radius:10px;background:var(--accent-bg);color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
+          style="flex:1;padding:10px;border:1.5px dashed #1D7A87;border-radius:10px;background:var(--accent-bg);color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
           📷 Foto hinzufügen
         </button>
         <input type="file" id="board-photo-input" accept="image/*" style="display:none" onchange="window._app.boardHandlePhoto(this)">
@@ -1326,9 +1326,9 @@ export function showUpgradeModal(context = 'general') {
       <div class="modal-sub" style="margin-bottom:16px">${c.sub}</div>
     </div>
 
-    <div style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border-radius:14px;padding:14px 16px;margin-bottom:16px;border:1px solid #c7d2fe">
-      <div style="font-size:12px;font-weight:600;color:#4338ca;margin-bottom:8px">${c.highlight}</div>
-      <div style="font-size:12px;color:#4338ca;line-height:1.9">
+    <div style="background:linear-gradient(135deg,#E3F7F9,#F0FBFC);border-radius:14px;padding:14px 16px;margin-bottom:16px;border:1px solid #8FDCE3">
+      <div style="font-size:12px;font-weight:600;color:#0B4A54;margin-bottom:8px">${c.highlight}</div>
+      <div style="font-size:12px;color:#0B4A54;line-height:1.9">
         ✓ Unbegrenzte Aufgaben, Kommentare & Board-Posts<br>
         ✓ Unbegrenzte Familienmitglieder & Einkaufslisten<br>
         ✓ Mahlzeiten für alle Wochen planbar<br>
@@ -1338,13 +1338,13 @@ export function showUpgradeModal(context = 'general') {
       </div>
     </div>
 
-    <div style="background:#5C4EE5;border-radius:14px;padding:16px;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden" onclick="window._app.openCheckout('yearly')">
+    <div style="background:#1D7A87;border-radius:14px;padding:16px;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden" onclick="window._app.openCheckout('yearly')">
       <div style="position:absolute;top:8px;right:10px;background:#F59E0B;color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:0.5px">BELIEBT</div>
       <div style="font-size:16px;font-weight:800;color:white">14,99 € / Jahr</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px">= 1,25 € pro Monat · 2 Monate gratis</div>
     </div>
 
-    <button style="width:100%;padding:13px;background:var(--accent-bg);color:#5C4EE5;border:1.5px solid #c7d2fe;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;margin-bottom:4px" onclick="window._app.openCheckout('monthly')">
+    <button style="width:100%;padding:13px;background:var(--accent-bg);color:#1D7A87;border:1.5px solid #8FDCE3;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;margin-bottom:4px" onclick="window._app.openCheckout('monthly')">
       1,99 € / Monat
     </button>
 
@@ -1458,7 +1458,7 @@ export function showRecipeStepsModal(iso, type, recipeKeyOverride) {
   const steps = recipe.steps || [];
   const stepsHTML = steps.map((s, i) => `
     <div class="recipe-step-row" id="step-row-${i}" style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
-      <div style="width:24px;height:24px;border-radius:50%;background:#5C4EE5;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">${i+1}</div>
+      <div style="width:24px;height:24px;border-radius:50%;background:#1D7A87;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">${i+1}</div>
       <textarea class="form-input step-input" data-step="${i}" rows="2"
         style="flex:1;resize:none;line-height:1.5;font-size:13px"
         placeholder="Schritt ${i+1} beschreiben…">${escapeHtml(s)}</textarea>
@@ -1492,7 +1492,7 @@ export function showRecipeStepsModal(iso, type, recipeKeyOverride) {
       ${stepsHTML || '<div id="steps-empty" style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch keine Schritte – füge den ersten hinzu</div>'}
     </div>
     <button type="button" onclick="window._app._recipeAddStep()"
-      style="width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#5C4EE5;cursor:pointer;font-family:inherit;margin-bottom:14px">
+      style="width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;font-size:13px;font-weight:600;color:#1D7A87;cursor:pointer;font-family:inherit;margin-bottom:14px">
       + Schritt hinzufügen
     </button>
     <button class="submit-btn" onclick="window._app._recipeSaveSteps('${escapeAttr(iso)}','${escapeAttr(type)}','${escapeAttr(useKey)}')">Speichern</button>
@@ -1534,7 +1534,7 @@ export function showRecipeDetailModal(iso, type) {
       <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Zubereitung</div>
       ${recipe.steps.map((s, i) => `
         <div style="display:flex;gap:12px;margin-bottom:12px;align-items:flex-start">
-          <div style="width:26px;height:26px;border-radius:50%;background:#5C4EE5;color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:#1D7A87;color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</div>
           <div style="flex:1;font-size:14px;color:var(--text1);line-height:1.5;padding-top:3px">${escapeHtml(s)}</div>
         </div>`).join('')}
     </div>`;
@@ -1566,7 +1566,7 @@ export function showRecipeImportModal() {
       <div class="modal-title">KI-Rezept-Import</div>
       <div class="modal-sub" style="margin-bottom:20px">Importiere Rezepte per URL, Text oder Foto – nur mit famiplan Plus.</div>
       <button onclick="window._app.closeModal();setTimeout(()=>import('./modules/premium.js').then(m=>m.showPremiumModal()),100)"
-        style="width:100%;padding:14px;background:linear-gradient(135deg,#5C4EE5,#7C6EE8);color:white;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-bottom:10px">
+        style="width:100%;padding:14px;background:linear-gradient(135deg,#1D7A87,#7C6EE8);color:white;border:none;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;margin-bottom:10px">
         ⭐ Jetzt Plus holen
       </button>
       <button onclick="window._app.closeModal()"
@@ -1583,7 +1583,7 @@ export function showRecipeImportModal() {
 
     <div style="display:flex;gap:8px;margin-bottom:14px">
       <button type="button" id="import-tab-text" onclick="window._app._recipeImportTab('text')"
-        style="flex:1;padding:9px;border:1.5px solid #5C4EE5;border-radius:10px;background:#5C4EE5;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+        style="flex:1;padding:9px;border:1.5px solid #1D7A87;border-radius:10px;background:#1D7A87;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
         🔗 URL / Text
       </button>
       <button type="button" id="import-tab-photo" onclick="window._app._recipeImportTab('photo')"
@@ -1705,7 +1705,7 @@ function _recipeImportShowPreview(recipe) {
 
   const stepsHTML = (recipe.steps || []).map((s, i) =>
     `<div style="display:flex;gap:10px;margin-bottom:8px;align-items:flex-start">
-      <div style="width:22px;height:22px;border-radius:50%;background:#5C4EE5;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i+1}</div>
+      <div style="width:22px;height:22px;border-radius:50%;background:#1D7A87;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">${i+1}</div>
       <textarea class="recipe-preview-step form-input" data-idx="${i}" rows="2"
         style="flex:1;resize:none;font-size:13px;line-height:1.5">${escapeHtml(s)}</textarea>
     </div>`
@@ -1798,7 +1798,7 @@ export function _recipeImportTab(tab) {
   textPanel.style.display  = isText ? '' : 'none';
   photoPanel.style.display = isText ? 'none' : '';
 
-  const activeStyle   = 'flex:1;padding:9px;border:1.5px solid #5C4EE5;border-radius:10px;background:#5C4EE5;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
+  const activeStyle   = 'flex:1;padding:9px;border:1.5px solid #1D7A87;border-radius:10px;background:#1D7A87;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
   const inactiveStyle = 'flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;background:transparent;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit';
   if (textBtn)  textBtn.style.cssText  = isText ? activeStyle : inactiveStyle;
   if (photoBtn) photoBtn.style.cssText = isText ? inactiveStyle : activeStyle;
@@ -1820,7 +1820,7 @@ export function _recipeImportPhotoSelected(input) {
         <img src="${dataUrl}" style="width:100%;max-height:220px;object-fit:contain;border-radius:10px"/>
         <div style="font-size:12px;color:var(--text3);margin-top:6px">Foto ausgewählt – jetzt Analysieren tippen</div>
       `;
-      preview.style.border = '2px solid #5C4EE5';
+      preview.style.border = '2px solid #1D7A87';
       preview.style.cursor = 'default';
       preview.onclick = null;
     }

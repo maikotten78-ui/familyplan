@@ -35,23 +35,23 @@ function cardV2HTML(t, iso) {
   const isTask   = t.type === 'task';
   const checkBtn = isTask && assignedTo && !done
     ? `<button class="v2-check-btn" onclick="event.stopPropagation();window._app.toggleDone('${t.id}','${iso}')" title="Erledigt">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#5C4EE5" stroke-width="1.5"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#5C4EE5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#1D7A87" stroke-width="1.5"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#1D7A87" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
        </button>`
     : isTask && done
     ? `<button class="v2-check-btn done-check" onclick="event.stopPropagation();window._app.toggleDone('${t.id}','${iso}')" title="Rückgängig">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#5C4EE5"/><path d="M5 8l2.5 2.5L11 5.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#1D7A87"/><path d="M5 8l2.5 2.5L11 5.5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
        </button>`
     : `<div class="v2-check-btn-placeholder"></div>`;
 
   let rightHTML = '';
   if (t.type === 'event') {
     rightHTML = assignedTo
-      ? `<span class="v2-assigned-chip" style="${isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #c7d2fe' : ''}">${isMine ? 'Du' : escapeHtml(assignedTo)}</span>`
+      ? `<span class="v2-assigned-chip" style="${isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #8FDCE3' : ''}">${isMine ? 'Du' : escapeHtml(assignedTo)}</span>`
       : `<button class="v2-assign-btn" onclick="event.stopPropagation();window._app.assignTask('${t.id}','${state.curUser}','${iso}')">Teilnehmen</button>`;
   } else if (!assignedTo) {
     rightHTML = `<button class="v2-assign-btn" onclick="event.stopPropagation();window._app.showAssignModal('${t.id}','${iso}')">Ich mach's!</button>`;
   } else {
-    const chipStyle = isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #c7d2fe' : 'background:#F5F6FA;color:var(--text2)';
+    const chipStyle = isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #8FDCE3' : 'background:#F5F6FA;color:var(--text2)';
     rightHTML = `<div class="v2-assigned-chip" style="${chipStyle}">${isMine ? 'Du' : `${state.av[assignedTo] || '👤'} ${escapeHtml(assignedTo)}`}</div>`;
   }
 
@@ -95,7 +95,7 @@ function cardV2HTML(t, iso) {
 function openTodoCardHTML(t, iso) {
   const { assignedTo, done } = getA(t, 'open');
   const safeTitle   = escapeHtml(t.title);
-  const accentColor = t.color || '#5C4EE5';
+  const accentColor = t.color || '#1D7A87';
   const cmts        = state.taskComments[t.id] || {};
   const cmtCount    = Object.keys(cmts).length;
   const isMine      = assignedTo === state.curUser;
@@ -104,11 +104,11 @@ function openTodoCardHTML(t, iso) {
     : (state.av[t.visibleTo] || '👤') + ' ' + escapeHtml(t.visibleTo);
 
   let rightHTML = assignedTo
-    ? `<div class="v2-assigned-chip" style="${isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #c7d2fe' : 'background:#F5F6FA;color:var(--text2)'}">${isMine ? 'Du' : `${state.av[assignedTo] || '👤'} ${escapeHtml(assignedTo)}`}</div>
+    ? `<div class="v2-assigned-chip" style="${isMine ? 'background:var(--accent-bg);color:var(--accent);font-weight:700;border:1px solid #8FDCE3' : 'background:#F5F6FA;color:var(--text2)'}">${isMine ? 'Du' : `${state.av[assignedTo] || '👤'} ${escapeHtml(assignedTo)}`}</div>
        <button class="v2-done-chip" onclick="event.stopPropagation();window._app.toggleDone('${t.id}','open')">✓ Erledigt</button>`
     : `<button class="v2-assign-btn" onclick="event.stopPropagation();window._app.assignTask('${t.id}','${state.curUser}','open')">Ich mach's!</button>`;
 
-  return `<div class="v2-card" style="${isMine ? 'background:var(--accent-bg2);border-color:#c7d2fe;' : ''}" onclick="window._app.showAssignModal('${t.id}','open')">
+  return `<div class="v2-card" style="${isMine ? 'background:var(--surface);border-color:var(--accent);border-width:1.5px;' : ''}" onclick="window._app.showAssignModal('${t.id}','open')">
     <div class="v2-accent" style="background:${accentColor}"></div>
     <div class="v2-card-inner">
       <div class="v2-time-col" style="min-width:28px;align-items:center;justify-content:center"><span style="font-size:16px">📋</span></div>
@@ -194,7 +194,7 @@ function renderTodayV2(iso, dayName) {
         <div style="flex:1;min-width:0">
           <div style="font-size:10px;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m)}</div>
           <div style="height:4px;background:var(--border);border-radius:2px;margin-top:2px;overflow:hidden">
-            <div style="height:100%;background:#5C4EE5;border-radius:2px;width:${mPct}%;transition:width 0.4s"></div>
+            <div style="height:100%;background:#1D7A87;border-radius:2px;width:${mPct}%;transition:width 0.4s"></div>
           </div>
         </div>
         <div style="font-size:10px;font-weight:700;color:var(--text3);flex-shrink:0">${mDone}/${mTasks.length}</div>
@@ -227,13 +227,13 @@ function renderTodayV2(iso, dayName) {
       const nudgeCount = parseInt(localStorage.getItem(nudgeKey) || '0');
       if (nudgeCount < 1) {
         localStorage.setItem(nudgeKey, nudgeCount + 1);
-        premiumNudge = `<div onclick="window._app.showUpgradeModal('general')" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:1px solid #c7d2fe;border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer">
+        premiumNudge = `<div onclick="window._app.showUpgradeModal('general')" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#E3F7F9,#F0FBFC);border:1px solid #8FDCE3;border-radius:12px;padding:10px 14px;margin-bottom:10px;cursor:pointer">
           <span style="font-size:20px">⭐</span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:700;color:#5C4EE5">famiplan Plus · ab 1,25 €/Monat</div>
+            <div style="font-size:12px;font-weight:700;color:#1D7A87">famiplan Plus · ab 1,25 €/Monat</div>
             <div style="font-size:11px;color:#6b7280">Unbegrenzte Kommentare & alle Features</div>
           </div>
-          <span style="font-size:16px;color:#5C4EE5">›</span>
+          <span style="font-size:16px;color:#1D7A87">›</span>
         </div>`;
       }
     } else if (isPremium && state._planLastVerified > 0) {
@@ -488,11 +488,11 @@ function buildTimelineColumn(iso, minH, maxH, hourPx) {
     const [th, tm] = t.time.split(':').map(Number);
     const startFrac = th + tm / 60;
     const top       = (startFrac - minH) * hourPx;
-    let height      = Math.max(24, hourPx * 0.75);
+    let height      = Math.max(32, hourPx * 0.75);
     if (t.endTime) {
       const [eh, em] = t.endTime.split(':').map(Number);
       const dur = (eh + em / 60) - startFrac;
-      if (dur > 0) height = Math.max(24, dur * hourPx);
+      if (dur > 0) height = Math.max(32, dur * hourPx);
     }
     const overlaps  = placed.filter(p => top < p.top + p.height && top + height > p.top);
     const usedCols  = new Set(overlaps.map(p => p.col));
@@ -748,8 +748,8 @@ function renderTimeline(iso) {
   dayTasks.forEach(t => {
     const [th, tm] = t.time.split(':').map(Number);
     const startFrac = th + tm / 60, top = (startFrac - minH) * hourPx;
-    let height = Math.max(28, hourPx * 0.8);
-    if (t.endTime) { const [eh, em] = t.endTime.split(':').map(Number); const dur = (eh + em / 60) - startFrac; if (dur > 0) height = Math.max(28, dur * hourPx); }
+    let height = Math.max(32, hourPx * 0.8);
+    if (t.endTime) { const [eh, em] = t.endTime.split(':').map(Number); const dur = (eh + em / 60) - startFrac; if (dur > 0) height = Math.max(32, dur * hourPx); }
     const overlaps = placed.filter(p => top < p.top + p.height && top + height > p.top);
     const usedCols = new Set(overlaps.map(p => p.col));
     let col = 0; while (usedCols.has(col)) col++;
@@ -981,7 +981,7 @@ export function renderCalendar() {
 
     out += `<div style="display:flex;gap:8px;margin-bottom:16px">
       <div style="flex:1;background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:2px">
-        <div style="font-size:22px;font-weight:800;color:#5C4EE5">${unopen}</div>
+        <div style="font-size:22px;font-weight:800;color:#1D7A87">${unopen}</div>
         <div style="font-size:11px;color:var(--text2);font-weight:500">Heute offen</div>
       </div>
       <div style="flex:1;background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--border);display:flex;flex-direction:column;gap:2px">
@@ -998,7 +998,7 @@ export function renderCalendar() {
         const isMine = assignedTo === state.curUser;
         const st = t.type === 'event' ? `<span class="badge b-event">Termin</span>`
           : done ? `<span class="ov-done">✓ Erledigt</span>`
-          : assignedTo ? `<span class="ov-yes" style="${isMine ? 'color:#5C4EE5;font-weight:700;background:#EDE9FE;padding:2px 7px;border-radius:4px;border:1px solid #c7d2fe' : ''}">✓ ${isMine ? 'Du' : escapeHtml(assignedTo)}</span>`
+          : assignedTo ? `<span class="ov-yes" style="${isMine ? 'color:#1D7A87;font-weight:700;background:#C9EFF3;padding:2px 7px;border-radius:4px;border:1px solid #8FDCE3' : ''}">✓ ${isMine ? 'Du' : escapeHtml(assignedTo)}</span>`
           : `<button class="ov-assign-btn" onclick="event.stopPropagation();window._app.showAssignModal('${t.id}','${iso}')">Ich mach's!</button>`;
         return `<div class="ov-row" onclick="window._app.showOvTaskMenu('${t.id}','${iso}')"><div class="ov-dot" style="background:${t.color}"></div><span class="ov-name${done?' done-txt':''}">${escapeHtml(t.title)}</span>${st}</div>`;
       }).join('');
@@ -1224,7 +1224,7 @@ export function renderBoard() {
           if (state.members.length > 1) {
             if (rReaders.length) {
               const rNames = rReaders.map(x => escapeHtml(x.name)).join(', ');
-              rReadReceiptHTML = `<div class="board-read-receipt" onclick="window._app.boardShowReaders('${postId}','${rid}')" style="font-size:10px;color:var(--accent,#5C4EE5);cursor:pointer;padding:2px 2px 0">✓✓ Gelesen von ${rNames}</div>`;
+              rReadReceiptHTML = `<div class="board-read-receipt" onclick="window._app.boardShowReaders('${postId}','${rid}')" style="font-size:10px;color:var(--accent,#1D7A87);cursor:pointer;padding:2px 2px 0">✓✓ Gelesen von ${rNames}</div>`;
             } else if (r.author === state.curUser) {
               rReadReceiptHTML = `<div class="board-read-receipt" style="font-size:10px;color:var(--text3);padding:2px 2px 0">✓ Gesendet</div>`;
             }
@@ -1261,7 +1261,7 @@ export function renderBoard() {
       if (state.members.length > 1) {
         if (readers.length) {
           const names = readers.map(r => escapeHtml(r.name)).join(', ');
-          readReceiptHTML = `<div class="board-read-receipt" onclick="window._app.boardShowReaders('${postId}')" style="font-size:11px;color:var(--accent,#5C4EE5);cursor:pointer;padding:2px 2px 0">✓✓ Gelesen von ${names}</div>`;
+          readReceiptHTML = `<div class="board-read-receipt" onclick="window._app.boardShowReaders('${postId}')" style="font-size:11px;color:var(--accent,#1D7A87);cursor:pointer;padding:2px 2px 0">✓✓ Gelesen von ${names}</div>`;
         } else if (post.author === state.curUser) {
           readReceiptHTML = `<div class="board-read-receipt" style="font-size:11px;color:var(--text3);padding:2px 2px 0">✓ Gesendet</div>`;
         }
@@ -1312,14 +1312,14 @@ export function renderShoppingContent() {
     if (!favs.length) return innerNav + `<div class="empty"><div class="empty-ico">⭐</div><div class="empty-txt">Keine Favoriten</div><div class="empty-sub">Markiere Artikel mit ⭐ um sie hier zu speichern</div></div>`;
     return innerNav + `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div class="stat-pill"><span>${favs.length}</span> Favoriten</div>
-      <button onclick="window._app.shopAddAllFavsToList()" style="padding:8px 14px;background:#5C4EE5;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Alle zur Liste</button>
+      <button onclick="window._app.shopAddAllFavsToList()" style="padding:8px 14px;background:#1D7A87;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Alle zur Liste</button>
     </div><div class="shop-group">${favs.map(shopFavItemHTML).join('')}</div>`;
   }
 
   if (!total) {
     const favs = shopItems.filter(i => i.fav);
     let html = innerNav + `<div class="empty"><div class="empty-ico" style="font-size:40px;opacity:0.3">🛒</div><div class="empty-txt">Liste ist leer</div><div class="empty-sub">Tippe + um Artikel hinzuzufügen</div></div>`;
-    if (favs.length) html += `<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="stat-pill"><span>${favs.length}</span> Favoriten</div><button onclick="window._app.shopAddAllFavsToList()" style="padding:8px 14px;background:#5C4EE5;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Alle zur Liste</button></div><div class="shop-group">${favs.map(shopFavItemHTML).join('')}</div>`;
+    if (favs.length) html += `<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="stat-pill"><span>${favs.length}</span> Favoriten</div><button onclick="window._app.shopAddAllFavsToList()" style="padding:8px 14px;background:#1D7A87;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Alle zur Liste</button></div><div class="shop-group">${favs.map(shopFavItemHTML).join('')}</div>`;
     return html;
   }
 
@@ -1373,7 +1373,7 @@ function shopFavItemHTML(item) {
       ${qtyStr ? `<span class="item-qty-chip">${qtyStr}</span>` : ''}
     </div>
     <div class="item-actions">
-      <button class="meal-icon-btn meal-icon-btn-edit" onclick="window._app.shopAddFavToList('${escapeAttr(item.id)}')" style="width:auto;padding:5px 10px;font-size:12px;font-weight:600;color:#5C4EE5;background:#EEF2FF;border-radius:7px">+ Liste</button>
+      <button class="meal-icon-btn meal-icon-btn-edit" onclick="window._app.shopAddFavToList('${escapeAttr(item.id)}')" style="width:auto;padding:5px 10px;font-size:12px;font-weight:600;color:#1D7A87;background:#E3F7F9;border-radius:7px">+ Liste</button>
       <button class="item-del" onclick="window._app.shopToggleFav('${item.id}')"><svg width="15" height="15" viewBox="0 0 16 16" fill="#F59E0B" stroke="#F59E0B" stroke-width="1.3" stroke-linejoin="round"><path d="M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.3l-3.7 2 .7-4.1-3-2.9 4.2-.7z"/></svg></button>
     </div>
   </div>`;
@@ -1413,11 +1413,11 @@ export function renderMeals() {
   </div>
   <div style="display:flex;gap:8px;padding:0 12px 12px">
     <button onclick="window._app.showRecipeManager()"
-      style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,#5C4EE5,#7C6EE8);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+      style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D7A87,#7C6EE8);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
       🍽️ Meine Rezepte
     </button>
     <button onclick="window._app.showRecipeImportModal()"
-      style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,#5C4EE5,#7C6EE8);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+      style="flex:1;padding:9px 12px;border:none;border-radius:10px;background:linear-gradient(135deg,#1D7A87,#7C6EE8);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
       ✨ KI-Import
     </button>
   </div>`;
@@ -1461,10 +1461,10 @@ export function renderMeals() {
   html += `<div style="background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <span style="font-size:12px;font-weight:600;color:var(--text2)">${pctLabel}</span>
-      <span style="font-size:12px;font-weight:700;color:${pct===100?'#059669':'#5C4EE5'}">${pct}%</span>
+      <span style="font-size:12px;font-weight:700;color:${pct===100?'#059669':'#1D7A87'}">${pct}%</span>
     </div>
     <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;margin-bottom:10px">
-      <div style="height:100%;border-radius:4px;background:${pct===100?'#059669':'#5C4EE5'};width:${pct}%;transition:width 0.4s ease"></div>
+      <div style="height:100%;border-radius:4px;background:${pct===100?'#059669':'#1D7A87'};width:${pct}%;transition:width 0.4s ease"></div>
     </div>
     ${hasAnything || hasPrevWeek ? `<div style="display:flex;gap:8px;margin-bottom:8px">
       ${hasPrevWeek ? `<button class="meal-transfer-btn" onclick="window._app._mealCopyFromPrevConfirm(${hasAnything})">
@@ -1511,7 +1511,7 @@ export function renderMeals() {
       const recipeBtn = hasSteps
         ? `<button class="meal-icon-btn" onclick="window._app.showRecipeDetailModal('${escapeAttr(iso)}','${id}')"
             title="${stepsCount} Zubereitungsschritte"
-            style="color:#5C4EE5;font-size:13px;padding:0 4px">📖</button>` : '';
+            style="color:#1D7A87;font-size:13px;padding:0 4px">📖</button>` : '';
       const shopBtn  = meal?.name && hasIngr
         ? `<button class="meal-icon-btn meal-icon-btn-shop${meal.addedToShop ? ' added' : ''}" id="meal-shop-btn-first"
             onclick="window._app.mealIngredientsToShop('${escapeAttr(iso)}','${id}') "
@@ -1701,7 +1701,7 @@ export function showAssignModal(id, iso) {
       <div style="margin:10px 0 4px">
         <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Teilnehmer</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${t.attendees.map(m => `<div style="display:flex;align-items:center;gap:5px;background:#F5F3FF;border:1px solid #EDE9FE;border-radius:20px;padding:4px 10px 4px 5px">
+          ${t.attendees.map(m => `<div style="display:flex;align-items:center;gap:5px;background:#F0FBFC;border:1px solid #C9EFF3;border-radius:20px;padding:4px 10px 4px 5px">
             <span style="font-size:18px">${state.photos?.[m] ? `<img src="${state.photos[m]}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle">` : (state.av[m] || '👤')}</span>
             <span style="font-size:13px;font-weight:600;color:var(--text1)">${escapeHtml(m)}</span>
           </div>`).join('')}
@@ -1735,7 +1735,7 @@ export function showAssignModal(id, iso) {
       ? `<img src="${state.photos[m]}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">`
       : `<span style="font-size:20px;line-height:1">${state.av[m] || '👤'}</span>`;
     return `<button onclick="window._app.assignTask('${id}','${escapeAttr(m)}','${viewISO}')"
-      style="display:flex;align-items:center;gap:8px;padding:8px 14px 8px 8px;border:2px solid ${isSel?'#5C4EE5':'#ECEEF2'};border-radius:20px;background:${isSel?'var(--accent-bg)':'var(--surface)'};cursor:pointer;font-family:inherit;font-size:13px;font-weight:${isSel?'700':'600'};color:${isSel?'#5C4EE5':'#374151'};transition:all 0.15s;flex-shrink:0">
+      style="display:flex;align-items:center;gap:8px;padding:8px 14px 8px 8px;border:2px solid ${isSel?'#1D7A87':'#ECEEF2'};border-radius:20px;background:${isSel?'var(--accent-bg)':'var(--surface)'};cursor:pointer;font-family:inherit;font-size:13px;font-weight:${isSel?'700':'600'};color:${isSel?'#1D7A87':'#374151'};transition:all 0.15s;flex-shrink:0">
       ${ph}
       <span>${escapeHtml(m)}</span>
       ${isSel ? '<span style="font-size:14px;margin-left:2px">✓</span>' : ''}

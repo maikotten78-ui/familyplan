@@ -204,7 +204,7 @@ function startTour(steps, tab) {
     }
     tooltip.innerHTML = `
       <div style="background:var(--surface);border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);transform:translateY(8px);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1)">
-        <div style="background:linear-gradient(135deg,#5C4EE5,#764ba2);padding:14px 18px 12px;position:relative;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#1D7A87,#163A5C);padding:14px 18px 12px;position:relative;overflow:hidden">
           <div style="position:absolute;top:-15px;right:-15px;width:70px;height:70px;background:rgba(255,255,255,0.08);border-radius:50%"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
             <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.8px">Schritt ${idx+1} von ${steps.length}</div>
@@ -215,11 +215,11 @@ function startTour(steps, tab) {
         <div style="padding:13px 18px 15px">
           <div style="font-size:13px;color:#4b5563;line-height:1.65;margin-bottom:13px">${step.text}</div>
           <div style="display:flex;gap:8px;align-items:center">
-            ${idx > 0 ? `<button onclick="window._app._tourPrev()" style="padding:10px 16px;background:#F5F3FF;color:#5C4EE5;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">‹</button>` : ''}
-            <button onclick="window._app._tourNext()" style="flex:1;padding:10px;background:#5C4EE5;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">${idx < steps.length-1 ? 'Weiter →' : 'Fertig ✓'}</button>
+            ${idx > 0 ? `<button onclick="window._app._tourPrev()" style="padding:10px 16px;background:#F0FBFC;color:#1D7A87;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">‹</button>` : ''}
+            <button onclick="window._app._tourNext()" style="flex:1;padding:10px;background:#1D7A87;color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">${idx < steps.length-1 ? 'Weiter →' : 'Fertig ✓'}</button>
           </div>
           <div style="display:flex;justify-content:center;gap:6px;margin-top:11px">
-            ${steps.map((_,i) => `<div style="width:${i===idx?'18px':'6px'};height:6px;border-radius:3px;background:${i===idx?'#5C4EE5':'#e5e7eb'};transition:all 0.3s"></div>`).join('')}
+            ${steps.map((_,i) => `<div style="width:${i===idx?'18px':'6px'};height:6px;border-radius:3px;background:${i===idx?'#1D7A87':'#e5e7eb'};transition:all 0.3s"></div>`).join('')}
           </div>
         </div>
       </div>`;

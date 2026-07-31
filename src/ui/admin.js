@@ -69,7 +69,7 @@ function familyRow(fid, f) {
     : `<span style="background:var(--bg3);color:var(--text3);font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px">Standard</span>`;
   const actionBtn = isGranted
     ? `<button onclick="window._app.adminRevokeFamily('${fid}')" style="font-size:11px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:#DC2626;cursor:pointer;font-family:inherit;font-weight:600">Entziehen</button>`
-    : `<button onclick="window._app.adminGrantFamily('${fid}')" style="font-size:11px;padding:5px 10px;border:none;border-radius:6px;background:#5C4EE5;color:white;cursor:pointer;font-family:inherit;font-weight:600">Freizugang</button>`;
+    : `<button onclick="window._app.adminGrantFamily('${fid}')" style="font-size:11px;padding:5px 10px;border:none;border-radius:6px;background:#1D7A87;color:white;cursor:pointer;font-family:inherit;font-weight:600">Freizugang</button>`;
   const deleteBtn = `<button data-fid="${escapeHtml(fid)}" data-fname="${escapeHtml(f.familyName || '')}"
     class="admin-delete-btn"
     style="font-size:11px;padding:5px 8px;border:1px solid #FECACA;border-radius:6px;background:var(--surface);color:#DC2626;cursor:pointer;font-family:inherit;font-weight:600">
@@ -275,7 +275,7 @@ export async function showAdminPanel() {
         placeholder="Was ist neu?"
       >✨ Kalender: Wischgesten & Zoom-Stufen&#10;📋 Tagesansicht: Zeitraum-Gruppen & direktes Abhaken&#10;🏠 Home: Schnellzugriff & Demnächst-Widget&#10;🛒 Einkauf: Autovervollständigung & Sofort-Hinzufügen&#10;🍽️ Mahlzeiten: Rezept-Vorschläge & Wochentransfer</textarea>
       <button id="bc-send-btn" onclick="${A('adminSendBroadcast()')}"
-        style="width:100%;padding:12px;background:#5C4EE5;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+        style="width:100%;padding:12px;background:#1D7A87;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
         📢 Jetzt senden
       </button>
       <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px">Sendet an alle aktiven Push-Subscriptions aller Nutzer</div>
@@ -283,7 +283,7 @@ export async function showAdminPanel() {
 
     <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
       <span>Familien</span>
-      <button onclick="${A('adminBulkIndexFamilies()')}" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:#5C4EE5;cursor:pointer;font-family:inherit;font-weight:600">Alle indexieren</button>
+      <button onclick="${A('adminBulkIndexFamilies()')}" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:#1D7A87;cursor:pointer;font-family:inherit;font-weight:600">Alle indexieren</button>
     </div>
     <div id="admin-list"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Lade Familien…</div></div>
     <button class="modal-close" onclick="${A('closeModal()')}">Schließen</button>

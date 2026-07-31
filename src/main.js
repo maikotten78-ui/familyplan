@@ -336,7 +336,7 @@ window._app = {
         <span style="flex:1;font-size:14px;font-weight:600;color:var(--text1)" onclick="window._app._shopAcSelect(${i})">${escHtml(c.name)}</span>
         <span style="font-size:11px;color:var(--text3);white-space:nowrap;margin-right:6px" onclick="window._app._shopAcSelect(${i})">${escHtml(qty)}</span>
         ${canQuick ? `<button onmousedown="event.preventDefault()" onclick="window._app._shopAcQuickAdd(${i})"
-          style="flex-shrink:0;padding:4px 9px;background:#5C4EE5;color:white;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Sofort</button>` : ''}
+          style="flex-shrink:0;padding:4px 9px;background:#1D7A87;color:white;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Sofort</button>` : ''}
       </div>`;
     }).join('');
 
@@ -750,7 +750,7 @@ window._app = {
     row.className = 'recipe-step-row';
     row.id = 'step-row-' + idx;
     row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;margin-bottom:10px';
-    row.innerHTML = '<div style="width:24px;height:24px;border-radius:50%;background:#5C4EE5;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">' + (idx+1) + '</div>'
+    row.innerHTML = '<div style="width:24px;height:24px;border-radius:50%;background:#1D7A87;color:white;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:8px">' + (idx+1) + '</div>'
       + '<textarea class="form-input step-input" data-step="' + idx + '" rows="2" style="flex:1;resize:none;line-height:1.5;font-size:13px" placeholder="Schritt ' + (idx+1) + ' beschreiben…"></textarea>'
       + '<button type="button" onclick="window._app._recipeRemoveStep(' + idx + ')" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--red-bg);color:var(--red-text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:6px;font-size:14px">×</button>';
     list.appendChild(row);

@@ -191,7 +191,7 @@ function scheduleDailySummary() {
 function toggle(key, btn) {
   const nv = !getPushSetting(key, true);
   setPushSetting(key, nv);
-  btn.style.background = nv ? '#5C4EE5' : '#D1D5DB';
+  btn.style.background = nv ? '#1D7A87' : '#D1D5DB';
   const span = btn.querySelector('span');
   if (span) span.style[nv ? 'right' : 'left'] = '3px';
 }
@@ -199,7 +199,7 @@ function toggle(key, btn) {
 function toggleSwitch(key, btn) {
   const nv = !getPushSetting(key, true);
   setPushSetting(key, nv);
-  btn.style.background = nv ? '#5C4EE5' : '#D1D5DB';
+  btn.style.background = nv ? '#1D7A87' : '#D1D5DB';
   const span = btn.querySelector('span');
   if (span) { span.style.left = nv ? '' : '3px'; span.style.right = nv ? '3px' : ''; }
 }
@@ -207,7 +207,7 @@ function toggleSwitch(key, btn) {
 export function showPushPage() {
   const overlay = document.createElement('div');
   overlay.id    = 'push-page';
-  overlay.style.cssText = 'position:fixed;inset:0;background:#5C4EE5;z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(env(safe-area-inset-top),48px) 20px max(env(safe-area-inset-bottom,0px),80px);';
+  overlay.style.cssText = 'position:fixed;inset:0;background:#1D7A87;z-index:999;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:max(env(safe-area-inset-top),48px) 20px max(env(safe-area-inset-bottom,0px),80px);';
 
   const nativePlatform = isNativePlatform();
   const supported     = nativePlatform || ('Notification' in window && 'PushManager' in window);
@@ -222,7 +222,7 @@ export function showPushPage() {
   const boardEnabled  = getPushSetting('boardEnabled', true);
   const remEnabled    = getPushSetting('reminderEnabled', true);
 
-  const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#5C4EE5' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
+  const sw = (active) => `width:44px;height:26px;border-radius:13px;border:none;background:${active ? '#1D7A87' : '#D1D5DB'};position:relative;cursor:pointer;flex-shrink:0`;
   const swDot = (active) => `<span style="position:absolute;top:3px;${active ? 'right:3px' : 'left:3px'};width:20px;height:20px;border-radius:50%;background:var(--surface);display:block;pointer-events:none"></span>`;
   const row = (id, title, sub, key, def) => `
     <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border2,#F5F6FA)">
@@ -249,16 +249,16 @@ export function showPushPage() {
     <div style="background:var(--surface);border-radius:16px;padding:18px;margin-bottom:16px">
       <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">🌙 Darstellung</div>
       <div style="display:flex;gap:6px;margin-top:10px">
-        <button id="dm-light" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='light'?'#5C4EE5':'var(--border)'};border-radius:10px;background:${dm==='light'?'#EEF2FF':'#F5F6FA'};color:${dm==='light'?'#5C4EE5':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">☀️ Hell</button>
-        <button id="dm-system" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='system'?'#5C4EE5':'var(--border)'};border-radius:10px;background:${dm==='system'?'#EEF2FF':'#F5F6FA'};color:${dm==='system'?'#5C4EE5':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">📱 Auto</button>
-        <button id="dm-dark" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='dark'?'#5C4EE5':'var(--border)'};border-radius:10px;background:${dm==='dark'?'#EEF2FF':'#F5F6FA'};color:${dm==='dark'?'#5C4EE5':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">🌙 Dunkel</button>
+        <button id="dm-light" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='light'?'#1D7A87':'var(--border)'};border-radius:10px;background:${dm==='light'?'#E3F7F9':'#F5F6FA'};color:${dm==='light'?'#1D7A87':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">☀️ Hell</button>
+        <button id="dm-system" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='system'?'#1D7A87':'var(--border)'};border-radius:10px;background:${dm==='system'?'#E3F7F9':'#F5F6FA'};color:${dm==='system'?'#1D7A87':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">📱 Auto</button>
+        <button id="dm-dark" style="flex:1;padding:10px 6px;border:1.5px solid ${dm==='dark'?'#1D7A87':'var(--border)'};border-radius:10px;background:${dm==='dark'?'#E3F7F9':'#F5F6FA'};color:${dm==='dark'?'#1D7A87':'#6b7280'};font-weight:600;font-size:12px;cursor:pointer;font-family:inherit">🌙 Dunkel</button>
       </div>
     </div>
 
     <div style="background:var(--surface);border-radius:16px;padding:18px;margin-bottom:16px">
       <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">Push-Nachrichten</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Auch wenn die App geschlossen ist</div>
-      <button id="pp-master-btn" style="width:100%;padding:14px;border:2px solid ${enabled ? '#5C4EE5' : 'var(--border)'};border-radius:12px;background:${enabled ? '#5C4EE5' : '#F5F6FA'};color:${enabled ? 'white' : '#5C4EE5'};font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
+      <button id="pp-master-btn" style="width:100%;padding:14px;border:2px solid ${enabled ? '#1D7A87' : 'var(--border)'};border-radius:12px;background:${enabled ? '#1D7A87' : '#F5F6FA'};color:${enabled ? 'white' : '#1D7A87'};font-weight:700;font-size:15px;cursor:pointer;font-family:inherit">
         ${enabled ? '✓ Aktiv – deaktivieren' : 'Push aktivieren'}
       </button>
       <div id="pp-status" style="font-size:12px;color:var(--text2);text-align:center;margin-top:8px">
@@ -271,10 +271,10 @@ export function showPushPage() {
       ${row('pp-comment',  '💬 Neuer Kommentar',    'Bei neuen Kommentaren',            'commentEnabled', true)}
       ${row('pp-board',    '📌 Home-Feed',           'Bei neuen Beiträgen',              'boardEnabled',   true)}
     </div>
-    ${!isPremiumActive() ? `<div onclick="window._app.showUpgradeModal('pushFull')" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:1px solid #c7d2fe;border-radius:12px;padding:10px 14px;margin-bottom:16px;cursor:pointer">
+    ${!isPremiumActive() ? `<div onclick="window._app.showUpgradeModal('pushFull')" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#E3F7F9,#F0FBFC);border:1px solid #8FDCE3;border-radius:12px;padding:10px 14px;margin-bottom:16px;cursor:pointer">
       <span style="font-size:18px">🔒</span>
-      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#5C4EE5">Weitere Benachrichtigungen mit Plus</div><div style="font-size:11px;color:#6b7280">Kommentare, Board-Posts & Morgens-Übersicht</div></div>
-      <span style="color:#5C4EE5;font-size:14px">›</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#1D7A87">Weitere Benachrichtigungen mit Plus</div><div style="font-size:11px;color:#6b7280">Kommentare, Board-Posts & Morgens-Übersicht</div></div>
+      <span style="color:#1D7A87;font-size:14px">›</span>
     </div>` : ''}
 
     <div style="background:var(--surface);border-radius:16px;overflow:hidden;margin-bottom:32px">
@@ -284,7 +284,7 @@ export function showPushPage() {
           <button id="pp-reminder" style="${sw(remEnabled)}">${swDot(remEnabled)}</button>
         </div>
         <div style="display:flex;gap:8px">
-          ${[10,15,30,60].map(n => `<button class="pp-min-btn" data-mins="${n}" style="flex:1;padding:8px 4px;border:1px solid ${mins===n?'#5C4EE5':'var(--border)'};border-radius:8px;background:${mins===n?'#EEF2FF':'#F5F6FA'};color:${mins===n?'#5C4EE5':'#6b7280'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${n < 60 ? n + ' Min.' : '1 Std.'}</button>`).join('')}
+          ${[10,15,30,60].map(n => `<button class="pp-min-btn" data-mins="${n}" style="flex:1;padding:8px 4px;border:1px solid ${mins===n?'#1D7A87':'var(--border)'};border-radius:8px;background:${mins===n?'#E3F7F9':'#F5F6FA'};color:${mins===n?'#1D7A87':'#6b7280'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${n < 60 ? n + ' Min.' : '1 Std.'}</button>`).join('')}
         </div>
       </div>
       <div style="padding:14px 16px">
@@ -296,7 +296,7 @@ export function showPushPage() {
           <button id="pp-daily" style="${sw(dailyEnabled)}">${swDot(dailyEnabled)}</button>
         </div>
         <div style="display:flex;gap:8px">
-          ${[6,7,8,9].map(h => `<button class="pp-hour-btn" data-hour="${h}" style="flex:1;padding:8px 4px;border:1px solid ${dailyHour===h?'#5C4EE5':'var(--border)'};border-radius:8px;background:${dailyHour===h?'#EEF2FF':'#F5F6FA'};color:${dailyHour===h?'#5C4EE5':'#6b7280'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${h}:00</button>`).join('')}
+          ${[6,7,8,9].map(h => `<button class="pp-hour-btn" data-hour="${h}" style="flex:1;padding:8px 4px;border:1px solid ${dailyHour===h?'#1D7A87':'var(--border)'};border-radius:8px;background:${dailyHour===h?'#E3F7F9':'#F5F6FA'};color:${dailyHour===h?'#1D7A87':'#6b7280'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${h}:00</button>`).join('')}
         </div>
       </div>
     </div>`;
@@ -329,7 +329,7 @@ export function showPushPage() {
       overlay.querySelectorAll('.pp-min-btn').forEach(b => {
         b.style.background = '#F5F6FA'; b.style.color = '#6b7280'; b.style.borderColor = 'var(--border)';
       });
-      this.style.background = '#EEF2FF'; this.style.color = '#5C4EE5'; this.style.borderColor = '#5C4EE5';
+      this.style.background = '#E3F7F9'; this.style.color = '#1D7A87'; this.style.borderColor = '#1D7A87';
       // Sofort nach Firebase speichern
       _syncSubscription();
     });
@@ -343,7 +343,7 @@ export function showPushPage() {
       overlay.querySelectorAll('.pp-hour-btn').forEach(b => {
         b.style.background = '#F5F6FA'; b.style.color = '#6b7280'; b.style.borderColor = 'var(--border)';
       });
-      this.style.background = '#EEF2FF'; this.style.color = '#5C4EE5'; this.style.borderColor = '#5C4EE5';
+      this.style.background = '#E3F7F9'; this.style.color = '#1D7A87'; this.style.borderColor = '#1D7A87';
       _syncSubscription();
     });
   });
@@ -372,7 +372,7 @@ export function showPushPage() {
       const disableFn = nativePlatform ? disableNativePush : disablePush;
       disableFn().then(() => {
         btn.textContent = 'Push aktivieren';
-        btn.style.background = '#F5F6FA'; btn.style.color = '#5C4EE5'; btn.style.borderColor = 'var(--border)';
+        btn.style.background = '#F5F6FA'; btn.style.color = '#1D7A87'; btn.style.borderColor = 'var(--border)';
         if (statusEl) statusEl.textContent = 'Status: deaktiviert';
         btn.disabled = false;
       });
@@ -398,7 +398,7 @@ export function showPushPage() {
           return;
         }
         btn.textContent = '✓ Aktiv – deaktivieren';
-        btn.style.background = '#5C4EE5'; btn.style.color = 'white'; btn.style.borderColor = '#5C4EE5';
+        btn.style.background = '#1D7A87'; btn.style.color = 'white'; btn.style.borderColor = '#1D7A87';
         if (statusEl) statusEl.textContent = 'Status: ✓ Aktiv';
         btn.disabled = false;
         scheduleReminders();
@@ -458,7 +458,7 @@ export function showPushPage() {
             setPushSetting('enabled', true);
             savePushSubscriptionToServer(sub).catch(e => console.warn(e));
             btn.textContent = '✓ Aktiv – deaktivieren';
-            btn.style.background = '#5C4EE5'; btn.style.color = 'white'; btn.style.borderColor = '#5C4EE5';
+            btn.style.background = '#1D7A87'; btn.style.color = 'white'; btn.style.borderColor = '#1D7A87';
             if (statusEl) statusEl.textContent = 'Status: ✓ Aktiv';
             btn.disabled = false;
             scheduleReminders();

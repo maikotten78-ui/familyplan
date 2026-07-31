@@ -254,7 +254,7 @@ export function showEditMemberModal(name, openModal) {
         </div>
         <div style="flex:1">
           <button type="button" onclick="document.getElementById('photo-input').click()"
-            style="width:100%;padding:10px;border:1.5px dashed #5C4EE5;border-radius:10px;background:#EEF2FF;color:#5C4EE5;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
+            style="width:100%;padding:10px;border:1.5px dashed #1D7A87;border-radius:10px;background:#E3F7F9;color:#1D7A87;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit">
             📷 Foto auswählen
           </button>
           ${curPhoto ? `<button type="button"

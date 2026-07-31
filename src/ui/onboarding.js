@@ -323,7 +323,7 @@ export async function obAddTemplates() {
   for (const t of templates) {
     const arr = new Uint8Array(4); crypto.getRandomValues(arr);
     const id  = 't_' + Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
-    await fbSet(`tasks/${id}`, { ...t, date: todayISO, day: todayDay, color: '#667eea', recurringInterval: 1, assignments: {}, location: '', createdBy: curUser });
+    await fbSet(`tasks/${id}`, { ...t, date: todayISO, day: todayDay, color: '#2AA9B8', recurringInterval: 1, assignments: {}, location: '', createdBy: curUser });
   }
   showSync('4 Vorlagen-Aufgaben angelegt ✨');
 }
@@ -438,13 +438,13 @@ export async function shareInviteLink() {
     <div class="modal-handle"></div>
     <div class="modal-title">🔗 Familie einladen</div>
     <div class="modal-sub">Teile diesen Link mit deiner Familie – gültig für 7 Tage, einmalig nutzbar</div>
-    <div style="background:#F5F3FF;border-radius:12px;padding:12px 14px;margin-bottom:16px;word-break:break-all;font-size:12px;color:#5C4EE5;font-weight:600;border:1px solid #EDE9FE">${url}</div>
+    <div style="background:#F0FBFC;border-radius:12px;padding:12px 14px;margin-bottom:16px;word-break:break-all;font-size:12px;color:#1D7A87;font-weight:600;border:1px solid #C9EFF3">${url}</div>
     <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank"
       style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#25D366;color:white;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;text-decoration:none;margin-bottom:10px">
       <span style="font-size:20px">💬</span> Per WhatsApp teilen
     </a>
     <button onclick="navigator.clipboard?.writeText('${url}').then(()=>window._app.showSync('Link kopiert! 📋'))"
-      style="width:100%;padding:13px;background:#EEF2FF;color:#5C4EE5;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
+      style="width:100%;padding:13px;background:#E3F7F9;color:#1D7A87;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">
       📋 Link kopieren
     </button>
     <button class="modal-close" onclick="window._app.closeModal()">Schließen</button>
@@ -527,7 +527,7 @@ export function showInstallPrompt(_retryCount = 0) {
       <div class="modal-title">App installieren</div>
       <div class="modal-sub">Füge famiplan zum Homescreen hinzu.</div>
     </div>
-    <div style="background:#F5F3FF;border-radius:14px;padding:16px;margin-bottom:16px">
+    <div style="background:#F0FBFC;border-radius:14px;padding:16px;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">${platform}</div>
       <div style="display:flex;flex-direction:column;gap:10px">${steps}</div>
     </div>
@@ -570,17 +570,17 @@ export function obShowDemo() {
     familyName:     'Familie Demo',
     members:        ['Mama','Papa','Lea'],
     av:             { 'Mama': '👩', 'Papa': '👨', 'Lea': '👧' },
-    memberColorMap: { 'Mama': '#5C4EE5', 'Papa': '#E53E3E', 'Lea': '#38A169' },
+    memberColorMap: { 'Mama': '#1D7A87', 'Papa': '#E53E3E', 'Lea': '#38A169' },
     curUser:        'Mama',
     dayNotes:       { [todayISO]: 'Heute: Lea hat Schulausflug! 🚌' },
 
     // ── Aufgaben & Termine ────────────────────────────────────────
     tasks: [
       // Heute – Morgen
-      { id: 'demo1', title: 'Lea zur Schule bringen',    emoji: '🎒', date: todayISO, day: todayDay, time: '07:30', endTime: '08:00', recurring: 'daily',  recurringInterval: 1, weekdays: [0,1,2,3,4], type: 'event', color: '#5C4EE5', assignments: { [todayISO]: { assignedTo: 'Papa', done: true  } }, location: 'Grundschule', createdBy: 'Mama' },
+      { id: 'demo1', title: 'Lea zur Schule bringen',    emoji: '🎒', date: todayISO, day: todayDay, time: '07:30', endTime: '08:00', recurring: 'daily',  recurringInterval: 1, weekdays: [0,1,2,3,4], type: 'event', color: '#1D7A87', assignments: { [todayISO]: { assignedTo: 'Papa', done: true  } }, location: 'Grundschule', createdBy: 'Mama' },
       { id: 'demo2', title: 'Einkauf Rewe',               emoji: '🛒', date: todayISO, day: todayDay, time: '10:00', endTime: '',       recurring: 'once',   recurringInterval: 1, weekdays: [],         type: 'task',  color: '#E53E3E', assignments: { [todayISO]: { assignedTo: 'Mama', done: false } }, location: 'Rewe', createdBy: 'Mama' },
       // Heute – Nachmittag
-      { id: 'demo3', title: 'Hausaufgaben kontrollieren', emoji: '📚', date: todayISO, day: todayDay, time: '15:00', endTime: '15:30', recurring: 'daily',  recurringInterval: 1, weekdays: [0,1,2,3,4], type: 'task',  color: '#667eea', assignments: { [todayISO]: { assignedTo: 'Papa', done: false } }, location: '', createdBy: 'Mama' },
+      { id: 'demo3', title: 'Hausaufgaben kontrollieren', emoji: '📚', date: todayISO, day: todayDay, time: '15:00', endTime: '15:30', recurring: 'daily',  recurringInterval: 1, weekdays: [0,1,2,3,4], type: 'task',  color: '#2AA9B8', assignments: { [todayISO]: { assignedTo: 'Papa', done: false } }, location: '', createdBy: 'Mama' },
       { id: 'demo4', title: 'Fußballtraining Lea',        emoji: '⚽', date: todayISO, day: todayDay, time: '16:30', endTime: '18:00', recurring: 'weekly', recurringInterval: 1, weekdays: [],         type: 'event', color: '#38A169', assignments: { [todayISO]: { assignedTo: 'Papa', done: false } }, location: 'Sportplatz Nord', createdBy: 'Papa' },
       // Heute – Abend
       { id: 'demo5', title: 'Abendessen kochen',          emoji: '🍝', date: todayISO, day: todayDay, time: '18:30', endTime: '19:00', recurring: 'once',   recurringInterval: 1, weekdays: [],         type: 'task',  color: '#F59E0B', assignments: { [todayISO]: { assignedTo: 'Mama', done: false } }, location: '', createdBy: 'Mama' },
@@ -588,7 +588,7 @@ export function obShowDemo() {
       { id: 'demo6', title: 'Zahnarzt Lea',               emoji: '🦷', date: tomorrowISO, day: dayFromISO(tomorrowISO), time: '09:00', endTime: '09:30', recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#EC4899', assignments: {}, location: 'Dr. Müller Praxis', createdBy: 'Mama' },
       { id: 'demo7', title: 'Müll rausbringen',           emoji: '🗑️', date: tomorrowISO, day: dayFromISO(tomorrowISO), time: '07:00', endTime: '', recurring: 'weekly', recurringInterval: 1, weekdays: [], type: 'task',  color: '#6B7280', assignments: {}, location: '', createdBy: 'Papa' },
       // Übermorgen
-      { id: 'demo8', title: 'Elternabend',                emoji: '🏫', date: in2ISO, day: dayFromISO(in2ISO), time: '19:30', endTime: '21:00', recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#5C4EE5', assignments: {}, location: 'Grundschule Aula', createdBy: 'Mama' },
+      { id: 'demo8', title: 'Elternabend',                emoji: '🏫', date: in2ISO, day: dayFromISO(in2ISO), time: '19:30', endTime: '21:00', recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#1D7A87', assignments: {}, location: 'Grundschule Aula', createdBy: 'Mama' },
       // In 3 Tagen
       { id: 'demo9', title: 'Geburtstag Oma',             emoji: '🎂', date: in3ISO, day: dayFromISO(in3ISO), time: '14:00', endTime: '17:00', recurring: 'yearly', recurringInterval: 1, weekdays: [], type: 'event', color: '#EC4899', assignments: {}, location: '', createdBy: 'Mama' },
       // Open To-Do
