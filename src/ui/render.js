@@ -1081,21 +1081,21 @@ export function renderBoard() {
 
   const next3 = todayOpen.slice(0, 3);
   if (next3.length) {
-    html += `<div style="display:flex;flex-direction:column;gap:5px">`;
+    html += `<div style="display:flex;flex-direction:column;gap:7px">`;
     next3.forEach(t => {
       const { assignedTo } = getA(t, todayISO);
       const [h, m]  = t.time.split(':').map(Number);
       const diffMin = h * 60 + m - nowMin;
       const isNow   = diffMin >= 0 && diffMin <= 15;
       const av = assignedTo ? (state.av[assignedTo] || '👤') : null;
-      html += `<div onclick="window._app.setTab('today')" style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,${isNow?'0.2':'0.12'});border-radius:10px;padding:8px 10px;cursor:pointer;${isNow?'box-shadow:0 0 0 1.5px rgba(255,255,255,0.4)':''}">
-        <div style="width:4px;height:28px;border-radius:2px;background:${t.color};flex-shrink:0"></div>
+      html += `<div onclick="window._app.setTab('today')" style="display:flex;align-items:center;gap:10px;background:${isNow?'white':'rgba(255,255,255,0.94)'};border-radius:10px;padding:9px 11px;cursor:pointer;${isNow?'box-shadow:0 0 0 2px rgba(255,255,255,0.9)':''}">
+        <div style="width:4px;height:30px;border-radius:2px;background:${t.color};flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.title)}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.6)">${t.time}</div>
+          <div style="font-size:13.5px;font-weight:600;color:#1a1d23;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.title)}</div>
+          <div style="font-size:11.5px;color:#6b7280">${t.time}</div>
         </div>
-        ${t.type !== 'event' ? (assignedTo ? `<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);text-align:right;flex-shrink:0">${av} ${escapeHtml(assignedTo)}</div>` : '<div style="font-size:10px;color:rgba(255,255,255,0.45);flex-shrink:0">○ Offen</div>') : ''}
-        ${isNow ? '<div style="font-size:10px;font-weight:700;color:white;background:rgba(255,255,255,0.2);border-radius:5px;padding:2px 6px;flex-shrink:0">Jetzt</div>' : ''}
+        ${t.type !== 'event' ? (assignedTo ? `<div style="font-size:11.5px;font-weight:600;color:#374151;text-align:right;flex-shrink:0">${av} ${escapeHtml(assignedTo)}</div>` : '<div style="font-size:10.5px;color:#9ca3af;flex-shrink:0">○ Offen</div>') : ''}
+        ${isNow ? '<div style="font-size:10px;font-weight:700;color:white;background:#1D7A87;border-radius:5px;padding:2px 6px;flex-shrink:0">Jetzt</div>' : ''}
       </div>`;
     });
     html += '</div>';
