@@ -1152,12 +1152,12 @@ export function renderBoard() {
       const av = assignedTo ? (state.av[assignedTo] || '👤') : null;
       const upcDayName = DAYS[jd2i(dd.getDay())];
       html += `<div class="board-upcoming-row" onclick="window._app.setDay('${upcDayName}','${iso}')">
-        <div style="width:3px;height:100%;min-height:28px;border-radius:2px;background:${t.color};flex-shrink:0"></div>
+        <div style="width:4px;height:100%;min-height:34px;border-radius:2px;background:${t.color};flex-shrink:0"></div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.emoji || '')} ${escapeHtml(t.title)}</div>
-          <div style="font-size:11px;color:var(--text3)">${dayLabel} · ${t.time}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(t.emoji || '')} ${escapeHtml(t.title)}</div>
+          <div style="font-size:12.5px;color:var(--text3);margin-top:2px">${dayLabel} · ${t.time}</div>
         </div>
-        ${t.type !== 'event' ? (assignedTo ? `<div style="font-size:11px;font-weight:600;color:var(--text2);text-align:right;flex-shrink:0">${av} ${escapeHtml(assignedTo)}</div>` : `<div style="font-size:10px;color:var(--text4);flex-shrink:0">○ Offen</div>`) : ''}
+        ${t.type !== 'event' ? (assignedTo ? `<div style="font-size:12px;font-weight:600;color:var(--text2);text-align:right;flex-shrink:0">${av} ${escapeHtml(assignedTo)}</div>` : `<div style="font-size:11.5px;color:var(--text4);flex-shrink:0">○ Offen</div>`) : ''}
       </div>`;
     });
     html += `</div></div>`;
