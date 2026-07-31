@@ -55,7 +55,7 @@ export function showFamilySetup() {
   // Show family/onboarding screen
   const screen = document.getElementById('family-screen');
   if (screen) screen.style.display = 'flex';
-  obGoTo(0);
+  obGoTo(1);
 }
 
 // ── CREATE FAMILY ─────────────────────────────────────────────
