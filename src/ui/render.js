@@ -1019,6 +1019,7 @@ export function renderCalendar() {
 
 // ── RENDER BOARD (HOME) ───────────────────────────────────────
 export function renderBoard() {
+  const boardLastSeenSnapshot = state.boardLastSeen || 0;
   boardMarkSeen();
   const todayISO  = localISO();
   const todayDay  = DAYS[jd2i(new Date().getDay())];
@@ -1047,6 +1048,27 @@ export function renderBoard() {
     const hrs = Math.floor(diff / 60), mins = diff % 60;
     return `in ${hrs} Std.${mins ? ' ' + mins + ' Min.' : ''}`;
   })() : null;
+
+  // #7 Kommende Termine – zeitlich sortiert, erledigte überspringen (früh berechnet: wird auch vom Kalender-Teaser gebraucht)
+  const upcomingAll = [];
+  for (let d = 1; d <= 14; d++) {
+    const dd  = new Date(); dd.setDate(dd.getDate() + d);
+    const iso = dd.toISOString().split('T')[0];
+    const day = DAYS[jd2i(dd.getDay())];
+    state.tasks
+      .filter(t => !t.openTodo && isVisible(t, day, iso))
+      .filter(t => t.type === 'task' ? !getA(t, iso).done : true)
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .forEach(t => upcomingAll.push({ t, iso, dd }));
+  }
+  upcomingAll.sort((a, b) => (a.iso + 'T' + a.t.time).localeCompare(b.iso + 'T' + b.t.time));
+  const upcSeen = new Set();
+  const upcomingTasks = upcomingAll.filter(({ t, iso }) => {
+    const k = t.id + '_' + iso;
+    if (upcSeen.has(k)) return false;
+    upcSeen.add(k);
+    return true;
+  }).slice(0, 4);
 
   // #4 Erfolgs-Karte wenn alle erledigt
   let html = '';
@@ -1107,6 +1129,46 @@ export function renderBoard() {
   }
   html += '</div>';
 
+  // #NEU: Mahlzeit heute + nächster Termin, nebeneinander
+  const todayMeals = state.meals[todayISO] || {};
+  const mealEntry  = todayMeals.dinner?.name ? { label: 'Heute Abend', ...todayMeals.dinner }
+    : todayMeals.lunch?.name ? { label: 'Mittags', ...todayMeals.lunch }
+    : todayMeals.breakfast?.name ? { label: 'Frühstück', ...todayMeals.breakfast }
+    : null;
+
+  const teaserEntry = nextTask
+    ? { title: nextTask.title, timeLabel: nextTask.time }
+    : (upcomingTasks[0] ? { title: upcomingTasks[0].t.title, timeLabel: upcomingTasks[0].dd.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · ' + upcomingTasks[0].t.time } : null);
+
+  html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div class="board-mini-card" onclick="window._app.setTab('meals')">
+      <span class="board-mini-icon">🍽️</span>
+      <div class="board-mini-label">${mealEntry ? mealEntry.label : 'Mahlzeiten'}</div>
+      <div class="board-mini-value">${mealEntry ? escapeHtml(mealEntry.name) : 'Noch nichts geplant'}</div>
+    </div>
+    <div class="board-mini-card" onclick="window._app.setTab('cal')">
+      <span class="board-mini-icon">📅</span>
+      <div class="board-mini-label">${teaserEntry ? 'Nächster Termin' : 'Kalender'}</div>
+      <div class="board-mini-value">${teaserEntry ? `${escapeHtml(teaserEntry.title)}` : 'Nichts anstehend'}</div>
+      ${teaserEntry ? `<div class="board-mini-sub">${teaserEntry.timeLabel}</div>` : ''}
+    </div>
+  </div>`;
+
+  // #NEU: Kompakte Board-Vorschau (letzter Beitrag), springt beim Antippen zum vollen Board weiter unten
+  const boardPostsArr = Object.entries(state.boardPosts || {}).sort((a, b) => b[1].ts - a[1].ts);
+  if (boardPostsArr[0]) {
+    const [, latestPost] = boardPostsArr[0];
+    const isUnread = latestPost.ts > boardLastSeenSnapshot && latestPost.author !== state.curUser;
+    const latestText = latestPost.photo && !latestPost.text ? '📷 Foto geteilt' : (latestPost.text || '');
+    html += `<div class="board-preview-card${isUnread ? ' unread' : ''}" onclick="document.getElementById('board-posts-anchor')?.scrollIntoView({behavior:'smooth',block:'start'})">
+      <div class="board-preview-head">
+        <span>💬 Familien-Board</span>
+        ${isUnread ? '<span class="board-preview-dot"></span>' : ''}
+      </div>
+      <div class="board-preview-text"><strong>${escapeHtml(latestPost.author)}:</strong> ${escapeHtml(latestText)}</div>
+    </div>`;
+  }
+
   // #2 Schnellzugriff-Chips
   html += `<div class="board-quick-actions">
     <button class="board-qa-btn" onclick="window._app.showAddModal && window._app.showAddModal()">＋ Aufgabe</button>
@@ -1115,32 +1177,7 @@ export function renderBoard() {
     <button class="board-qa-btn" onclick="window._app.setTab('meals')">🍽 Mahlzeit</button>
   </div>`;
 
-  // #7 Kommende Termine Widget – zeitlich sortiert, erledigte überspringen
-  const upcomingAll = [];
-  for (let d = 1; d <= 14; d++) {
-    const dd  = new Date(); dd.setDate(dd.getDate() + d);
-    const iso = dd.toISOString().split('T')[0];
-    const day = DAYS[jd2i(dd.getDay())];
-    state.tasks
-      .filter(t => !t.openTodo && isVisible(t, day, iso))
-      .filter(t => t.type === 'task' ? !getA(t, iso).done : true) // erledigte überspringen
-      .sort((a, b) => a.time.localeCompare(b.time))
-      .forEach(t => upcomingAll.push({ t, iso, dd }));
-  }
-  // Zeitlich sortieren: Datum + Uhrzeit
-  upcomingAll.sort((a, b) => {
-    const aKey = a.iso + 'T' + a.t.time;
-    const bKey = b.iso + 'T' + b.t.time;
-    return aKey.localeCompare(bKey);
-  });
-  // Deduplizieren: gleiche taskId+iso nur einmal
-  const seen = new Set();
-  const upcomingTasks = upcomingAll.filter(({ t, iso }) => {
-    const k = t.id + '_' + iso;
-    if (seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  }).slice(0, 4);
+  // #7 Kommende Termine Widget (Daten oben bereits berechnet)
 
   if (upcomingTasks.length) {
     html += `<div class="board-upcoming">
@@ -1191,6 +1228,7 @@ export function renderBoard() {
       const myReac     = uid ? reacs[uid] : null;
       const reacCounts = {};
       Object.values(reacs).forEach(e => { reacCounts[e] = (reacCounts[e] || 0) + 1; });
+      const postIsUnread = post.ts > boardLastSeenSnapshot && post.author !== state.curUser;
 
       // #6 Nur genutzte Reaktionen + Picker-Button
       const usedReacs = BOARD_REACTIONS.filter(e => (reacCounts[e] || 0) > 0 || myReac === e);
@@ -1269,7 +1307,8 @@ export function renderBoard() {
       }
 
       // #3 Vollbreites Bild
-      html += `<div class="board-post">
+      html += `<div class="board-post${postIsUnread ? ' unread' : ''}">
+        ${postIsUnread ? '<div class="board-post-unread-tag">Neu</div>' : ''}
         <div class="board-post-header">
           <div class="board-post-av">${state.photos?.[post.author] ? `<img src="${state.photos[post.author]}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">` : (state.av[post.author] || '👤')}</div>
           <div>
