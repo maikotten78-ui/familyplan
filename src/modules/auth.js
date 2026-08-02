@@ -3,6 +3,7 @@ import { unsubscribeAll } from './listener.js';
 import { state, setState } from './state.js';
 import { fbFetch } from './firebase.js';
 import { clearFamilyCache } from './cache.js';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
 // ── SCRIPT LOADER ─────────────────────────────────────────────
 function loadScript(src) {
@@ -212,7 +213,6 @@ export async function authGoogle() {
   // der App (state.firebaseAuth) wie gewohnt weiterläuft.
   if (isNativeIOS) {
     try {
-      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
       const result = await FirebaseAuthentication.signInWithGoogle();
       const idToken     = result?.credential?.idToken;
       const accessToken = result?.credential?.accessToken;
