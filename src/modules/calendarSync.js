@@ -34,6 +34,7 @@ import { isPremiumActive } from './premium.js';
 
 const SYNC_CALENDAR_NAME = 'famiplan';
 const LS_LAST_SYNC_KEY   = 'fp_calendar_sync_last';
+let syncInProgress = false; // verhindert überlappende Sync-Durchläufe (Ursache für Termin-Dopplungen)
 
 // ── PLATTFORM-CHECK ───────────────────────────────────────────
 export function isCalendarSyncSupported() {
@@ -202,6 +203,17 @@ export async function runCalendarSync({ silent = false } = {}) {
   if (!isCalendarSyncEnabledByUser())    return { ok: false, reason: 'opted-out' };
   if (!isPremiumActive())                return { ok: false, reason: 'not-premium' };
   if (!state.familyId || !state.curUser) return { ok: false, reason: 'no-family' };
+  if (syncInProgress) return { ok: false, reason: 'already-running' };
+
+  syncInProgress = true;
+  try {
+    return await runCalendarSyncInner({ silent });
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+async function runCalendarSyncInner({ silent = false } = {}) {
 
   const granted = await requestCalendarPermission();
   if (!granted) return { ok: false, reason: 'permission-denied' };
