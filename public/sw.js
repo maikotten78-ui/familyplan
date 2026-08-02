@@ -1,5 +1,5 @@
 // famiplan Service Worker
-const CACHE_NAME = 'famiplan-v27';
+const CACHE_NAME = 'famiplan-v28';
 
 // App-Shell Assets die beim Install gecacht werden
 const PRECACHE_URLS = ['/', '/index.html', '/icon-192.png', '/icon-512.png'];
