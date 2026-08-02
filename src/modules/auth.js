@@ -206,6 +206,7 @@ export async function authGoogle() {
   if (err) err.textContent = '';
 
   const isNativeIOS = window.Capacitor?.isNativePlatform?.() && window.Capacitor?.getPlatform?.() === 'ios';
+  console.log('[authGoogle] isNativeIOS:', isNativeIOS, '| Capacitor vorhanden:', !!window.Capacitor, '| Platform:', window.Capacitor?.getPlatform?.());
 
   // Native iOS: Web-Popup/Redirect funktioniert nicht in der WKWebView (von Google
   // seit 2021 blockiert). Stattdessen natives Google-Sign-In über das Plugin, danach
@@ -213,13 +214,18 @@ export async function authGoogle() {
   // der App (state.firebaseAuth) wie gewohnt weiterläuft.
   if (isNativeIOS) {
     try {
+      console.log('[authGoogle] FirebaseAuthentication Plugin-Objekt:', FirebaseAuthentication);
+      console.log('[authGoogle] rufe signInWithGoogle() auf...');
       const result = await FirebaseAuthentication.signInWithGoogle();
+      console.log('[authGoogle] signInWithGoogle() Ergebnis:', result);
       const idToken     = result?.credential?.idToken;
       const accessToken = result?.credential?.accessToken;
       if (!idToken) throw new Error('Kein idToken vom nativen Google-Sign-In erhalten');
       const credential = window.firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
       await state.firebaseAuth.signInWithCredential(credential);
+      console.log('[authGoogle] signInWithCredential() erfolgreich');
     } catch (e) {
+      console.error('[authGoogle] Fehler:', e);
       if (err) err.textContent = authErrorMessage(e.code) || e.message || 'Google-Anmeldung fehlgeschlagen';
     }
     return;
