@@ -1,5 +1,11 @@
 {
   "appId": "app.famiplan.app",
   "appName": "famiplan",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": ["google.com"]
+    }
+  }
 }
