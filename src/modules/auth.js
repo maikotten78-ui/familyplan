@@ -203,6 +203,28 @@ export async function authSubmit() {
 export async function authGoogle() {
   const err = document.getElementById('auth-err');
   if (err) err.textContent = '';
+
+  const isNativeIOS = window.Capacitor?.isNativePlatform?.() && window.Capacitor?.getPlatform?.() === 'ios';
+
+  // Native iOS: Web-Popup/Redirect funktioniert nicht in der WKWebView (von Google
+  // seit 2021 blockiert). Stattdessen natives Google-Sign-In über das Plugin, danach
+  // die zurückgegebenen Tokens an die JS-Firebase-Instanz übergeben, damit der Rest
+  // der App (state.firebaseAuth) wie gewohnt weiterläuft.
+  if (isNativeIOS) {
+    try {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+      const result = await FirebaseAuthentication.signInWithGoogle();
+      const idToken     = result?.credential?.idToken;
+      const accessToken = result?.credential?.accessToken;
+      if (!idToken) throw new Error('Kein idToken vom nativen Google-Sign-In erhalten');
+      const credential = window.firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
+      await state.firebaseAuth.signInWithCredential(credential);
+    } catch (e) {
+      if (err) err.textContent = authErrorMessage(e.code) || e.message || 'Google-Anmeldung fehlgeschlagen';
+    }
+    return;
+  }
+
   try {
     const provider  = new window.firebase.auth.GoogleAuthProvider();
     const isAndroid = /android/i.test(navigator.userAgent);
