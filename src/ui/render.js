@@ -397,6 +397,19 @@ function taskDotsForDay(iso) {
 }
 
 // Zoom 0: nur Farbpunkte
+// Monatszelle: Termine als Text-Balken (Google-Kalender-Stil), max. 2 + "+N weitere"
+function taskBarsMonthCell(iso) {
+  const name  = dayFromISO(iso);
+  const tasks = state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso)).sort((a,b) => a.time.localeCompare(b.time));
+  if (!tasks.length) return '';
+  const shown = tasks.slice(0, 2).map(t => {
+    const label = (t.emoji ? t.emoji + ' ' : '') + t.title;
+    return `<div class="cal-task-preview" style="background:${t.color}">${escapeHtml(label)}</div>`;
+  }).join('');
+  const more = tasks.length > 2 ? `<div class="cal-task-more">+${tasks.length - 2} weitere</div>` : '';
+  return shown + more;
+}
+
 function taskPreviewForDay(iso) {
   const name  = dayFromISO(iso);
   const tasks = state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso)).sort((a,b) => a.time.localeCompare(b.time));
@@ -796,6 +809,24 @@ export function renderCalendar() {
   const isOnToday_7tage = calSelISO === todayISO;
   const calHeuteBtn = (show) => show ? '' : `<button class="cal-heute-btn" onclick="window._app.calGoToday()">↩ Heute</button>`;
 
+  // Vollbild-Tagesansicht (aus Monatsansicht heraus getappt) - kompletter Screen, kein Monats-Header
+  if (calView === 'month' && state.calShowTimeline) {
+    const dayContent = render1DayTimeline(calSelISO) || `<div class="cal-day-fs-empty">Keine Termine an diesem Tag</div>`;
+    requestAnimationFrame(() => {
+      const body = document.querySelector('.tl3-body');
+      const firstEvent = document.querySelector('.tl3-event');
+      if (body && firstEvent) body.scrollTop = Math.max(0, firstEvent.offsetTop - 40);
+    });
+    return `<div class="cal-day-fullscreen">
+      <div class="cal-day-fs-header">
+        <button class="cal-back-btn" onclick="window._app.calBackToMonth()">‹ Zurück</button>
+        <div class="cal-day-fs-title">${dayLabel(calSelISO)}</div>
+        <div style="width:64px"></div>
+      </div>
+      ${dayContent}
+    </div>`;
+  }
+
   const navBtns = calView === '7tage'
     ? `<div class="cal-header"><div class="cal-month">7 Tage</div>${calHeuteBtn(isOnToday_7tage)}</div>`
     : `<div class="cal-header"><button class="cal-nav" onclick="window._app.calPrev()">‹</button><div class="cal-month">${calView === 'month' ? calMonthName(calYear, calMonth) : weekRangeLabel()}</div>${calHeuteBtn(calView === 'month' ? isOnToday_month : isOnToday_week)}<button class="cal-nav" onclick="window._app.calNext()">›</button></div>`;
@@ -809,26 +840,14 @@ export function renderCalendar() {
   // isOnToday_week bereits berechnet oben
 
   if (calView === 'month') {
-    const calZoom = state.calZoom || 0;
     const allDays = getMonthDays(calYear, calMonth);
-    const allWeeks = [];
-    for (let i = 0; i < allDays.length; i += 7) allWeeks.push(allDays.slice(i, i + 7));
-
-    // Anzahl sichtbarer Wochen je Zoom-Stufe
-    let weeks = allWeeks;
-    if (calZoom >= 1) {
-      const selWeekIdx = allWeeks.findIndex(w => w.some(d => d.iso === calSelISO));
-      const idx  = selWeekIdx >= 0 ? selWeekIdx : Math.floor(allWeeks.length / 2);
-      const span = calZoom === 1 ? 2 : 1; // Zoom1: 3 Wochen, Zoom2: 2 Wochen (je nach Rand)
-      const from = Math.max(0, idx - (calZoom === 2 ? 0 : 1));
-      const to   = Math.min(allWeeks.length - 1, from + span);
-      weeks = allWeeks.slice(from, to + 1);
-    }
+    const weeks = [];
+    for (let i = 0; i < allDays.length; i += 7) weeks.push(allDays.slice(i, i + 7));
 
     const wdRow = `<div class="weekday-lbl cal-kw-hdr">KW</div>` +
       WDLBLS.map(w => `<div class="weekday-lbl">${w}</div>`).join('');
 
-    const cellH  = calZoom === 0 ? 46 : calZoom === 1 ? 72 : 100;
+    const cellH = 88;
 
     const daysCells = weeks.map(week => {
       const firstIn = week.find(d => d.inMonth) || week[0];
@@ -839,16 +858,10 @@ export function renderCalendar() {
         const hInfo   = inMonth ? getHolidayInfo(iso) : null;
         const hDot    = hInfo ? `<span class="cal-holiday-dot ${hInfo.type}" title="${hInfo.name}"></span>` : '';
         const overdue = inMonth ? hasOverdueForDay(iso) : false;
-        const preview = !inMonth ? '' :
-          calZoom === 0 ? taskPreviewForDay(iso) :
-          calZoom === 1 ? taskPreviewZoom1(iso)  :
-                          taskPreviewZoom2(iso);
-        return `<div class="cal-day${calZoom>=1?' cal-day-zoom':''}${!inMonth?' other-month':''}${iso===todayISO?' today':''}${iso===calSelISO?' selected':''}"
+        const preview = !inMonth ? '' : taskBarsMonthCell(iso);
+        return `<div class="cal-day${!inMonth?' other-month':''}${iso===todayISO?' today':''}${iso===calSelISO?' selected':''}"
           style="min-height:${cellH}px"
-          onclick="window._app.calDayTap('${iso}')"
-          ontouchstart="window._app._calLpStart(event,'${iso}')"
-          ontouchend="window._app._calLpEnd()"
-          ontouchmove="window._app._calLpEnd()">
+          onclick="window._app.calDayTap('${iso}')">
           <div class="cal-day-num${hInfo?' has-holiday':''}${overdue?' cal-overdue':''}">
             ${num}${overdue ? '<span class="cal-overdue-dot"></span>' : ''}
           </div>
@@ -857,19 +870,11 @@ export function renderCalendar() {
       }).join('');
     }).join('');
 
-    // Zoom-Buttons (Desktop + Mobile)
-    const zoomBtns = `<div class="cal-zoom-btns">
-      <button class="cal-zoom-btn${calZoom === 0 ? ' disabled' : ''}" onclick="window._app.setCalZoom(${calZoom - 1})" title="Rauszoomen">−</button>
-      <span class="cal-zoom-label">${calZoom === 0 ? 'Monat' : calZoom === 1 ? '3 Wochen' : '2 Wochen'}</span>
-      <button class="cal-zoom-btn${calZoom === 2 ? ' disabled' : ''}" onclick="window._app.setCalZoom(${calZoom + 1})" title="Reinzoomen">＋</button>
-    </div>`;
-
-    out += zoomBtns;
     out += `<div class="month-grid" id="cal-month-grid">
       <div class="weekday-row" style="grid-template-columns:22px repeat(7,1fr)">${wdRow}</div>
       <div class="days-grid" style="grid-template-columns:22px repeat(7,1fr)">${daysCells}</div>
     </div>`;
-    // Gesture-Listener nach dem DOM-Update registrieren
+    // Gesture-Listener nach dem DOM-Update registrieren (Wisch-Navigation zwischen Monaten)
     requestAnimationFrame(() => window._app._calInitGesture && window._app._calInitGesture());
     // Feiertags-Banner
     const selHoliday = getHolidayInfo(calSelISO);
@@ -877,23 +882,6 @@ export function renderCalendar() {
       out += `<div class="cal-holiday-bar ${selHoliday.type}">
         ${selHoliday.type === 'feiertag' ? '🟡' : '🟢'} ${selHoliday.name}
       </div>`;
-    }
-    // Timeline nur wenn explizit geöffnet (state.calShowTimeline)
-    if (state.calShowTimeline) {
-      out += render1DayTimeline(calSelISO);
-      // Scroll zur frühesten Aufgabe
-      requestAnimationFrame(() => {
-        const tl = document.querySelector('.tl3-wrap');
-        if (!tl) return;
-        tl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        // Innerhalb der Timeline zur frühesten Aufgabe scrollen
-        const body = tl.querySelector('.tl3-body');
-        const firstEvent = tl.querySelector('.tl3-event');
-        if (body && firstEvent) {
-          const offset = firstEvent.offsetTop;
-          body.scrollTop = Math.max(0, offset - 40);
-        }
-      });
     }
 
   } else if (calView === 'week') {

@@ -959,7 +959,7 @@ window._app = {
   },
   setTodayMember: (m) => { setState({todayMember:m}); renderContent(); },
   setDayView:   (v) => { setState({calDayView:v}); renderContent(); },
-  setCalView:   (v) => { setState({calView:v}); renderContent(); },
+  setCalView:   (v) => { setState({calView:v, calShowTimeline:false}); renderContent(); },
 
   // ── #3+4: Tap auf leeren Zeitslot → Add-Modal mit Uhrzeit ────────────
   _calTimeSlotTap: (e, iso, minH, hourPx) => {
@@ -983,16 +983,15 @@ window._app = {
     renderContent();
   },
 
-  // Tap auf Tag: Timeline ein/ausklappen + zur frühesten Aufgabe scrollen
+  // Tap auf Tag in der Monatsansicht: öffnet Vollbild-Tagesansicht
   calDayTap: (iso) => {
-    const wasSelected = state.calSelISO === iso;
-    const wasOpen     = state.calShowTimeline;
-    // Wenn selber Tag nochmal: Timeline togglen
-    // Wenn anderer Tag: auswählen + Timeline öffnen
-    setState({
-      calSelISO:       iso,
-      calShowTimeline: wasSelected ? !wasOpen : true,
-    });
+    setState({ calSelISO: iso, calShowTimeline: true });
+    renderContent();
+  },
+
+  // Zurück-Button in der Vollbild-Tagesansicht: zurück zur Monatsansicht
+  calBackToMonth: () => {
+    setState({ calShowTimeline: false });
     renderContent();
   },
 
@@ -1043,9 +1042,7 @@ window._app = {
 
     grid.addEventListener('touchend', (e) => {
       if (g.isPinch) {
-        const ratio = g.lastDist / g.startDist;
-        if (ratio > 1.2)      window._app.setCalZoom((state.calZoom || 0) + 1);
-        else if (ratio < 0.8) window._app.setCalZoom((state.calZoom || 0) - 1);
+        // Pinch-Zoom entfernt (reine Monatsansicht) - Geste wird ignoriert
         g.isPinch = false; g.tracking = false;
         return;
       }
