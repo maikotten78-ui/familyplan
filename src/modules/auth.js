@@ -135,8 +135,8 @@ export function authSetMode(mode) {
   if (sub) sub.textContent = mode === 'login' ? 'Melde dich an um fortzufahren' : 'Erstelle deinen Account';
   const pw = document.getElementById('auth-password');
   if (pw && mode === 'register') pw.autocomplete = 'new-password';
-  const confirmGroup = document.getElementById('auth-email-confirm-group');
-  const confirmInput = document.getElementById('auth-email-confirm');
+  const confirmGroup = document.getElementById('auth-password-confirm-group');
+  const confirmInput = document.getElementById('auth-password-confirm');
   if (confirmGroup) confirmGroup.style.display = mode === 'register' ? '' : 'none';
   if (confirmInput && mode !== 'register') confirmInput.value = ''; // beim Zurueckwechseln zu "Anmelden" zuruecksetzen
 }
@@ -165,9 +165,9 @@ export async function authSubmit() {
   if (!email || !password) { if (err) err.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
 
   if (state.authMode === 'register') {
-    const emailConfirm = document.getElementById('auth-email-confirm')?.value.trim();
-    if (!emailConfirm) { if (err) err.textContent = 'Bitte E-Mail zur Bestätigung erneut eingeben'; return; }
-    if (email.toLowerCase() !== emailConfirm.toLowerCase()) { if (err) err.textContent = 'E-Mail-Adressen stimmen nicht überein'; return; }
+    const passwordConfirm = document.getElementById('auth-password-confirm')?.value;
+    if (!passwordConfirm) { if (err) err.textContent = 'Bitte Passwort zur Bestätigung erneut eingeben'; return; }
+    if (password !== passwordConfirm) { if (err) err.textContent = 'Passwörter stimmen nicht überein'; return; }
   }
 
   if (btn) { btn.disabled = true; btn.textContent = 'Bitte warten…'; }
