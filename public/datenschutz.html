@@ -43,7 +43,7 @@
 <div class="header">
   <a class="header-back" href="/">‹ Zurück zur App</a>
   <div class="header-title">Datenschutzerklärung</div>
-  <div class="header-sub">Stand: Juli 2026 (aktualisiert)</div>
+  <div class="header-sub">Stand: August 2026 (aktualisiert)</div>
 </div>
 
 <div class="content">
@@ -104,8 +104,14 @@
     Hosting der App-Dateien und Betrieb des Push-Benachrichtigungs-Workers. Cloudflare verarbeitet dabei technische Verbindungsdaten (IP-Adresse, Browser) für die Auslieferung der Seite und den Versand von Push-Nachrichten.<br>
     <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">Cloudflare Datenschutzrichtlinie →</a></p>
     <p style="margin-top:12px"><strong>LemonSqueezy (LS Technologies Inc.)</strong><br>
-    Für die Abwicklung von Abonnements und Zahlungen nutzt famiplan LemonSqueezy. LemonSqueezy ist ein sogenannter „Merchant of Record" – das bedeutet, dass LemonSqueezy als offizieller Verkäufer auftritt und die gesamte Zahlungsabwicklung (inkl. Steuern und Rechnungsstellung) in eigenem Namen übernimmt. Dabei werden Zahlungsdaten (z. B. Kreditkarte, Bankverbindung), E-Mail-Adresse und Rechnungsadresse direkt an LemonSqueezy übermittelt und dort verarbeitet. Wir selbst erhalten keine vollständigen Zahlungsdaten. Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).<br>
+    Für die Abwicklung von Abonnements und Zahlungen in der <strong>Web-Version</strong> von famiplan nutzen wir LemonSqueezy. LemonSqueezy ist ein sogenannter „Merchant of Record" – das bedeutet, dass LemonSqueezy als offizieller Verkäufer auftritt und die gesamte Zahlungsabwicklung (inkl. Steuern und Rechnungsstellung) in eigenem Namen übernimmt. Dabei werden Zahlungsdaten (z. B. Kreditkarte, Bankverbindung), E-Mail-Adresse und Rechnungsadresse direkt an LemonSqueezy übermittelt und dort verarbeitet. Wir selbst erhalten keine vollständigen Zahlungsdaten. Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).<br>
     <a href="https://www.lemonsqueezy.com/privacy" target="_blank">LemonSqueezy Datenschutzrichtlinie →</a></p>
+    <p style="margin-top:12px"><strong>Apple In-App-Kauf & RevenueCat (in der iOS-App)</strong><br>
+    In der <strong>iOS-App</strong> erfolgt der Kauf von famiplan Plus ausschließlich über Apples In-App-Kauf-System. Die Zahlungsabwicklung übernimmt Apple selbst; wir erhalten keine Zahlungs- oder Kartendaten. Zur technischen Verwaltung des Abo-Status nutzen wir den Dienst <strong>RevenueCat</strong> (RevenueCat, Inc.), der den Kaufbeleg mit Apple abgleicht und uns den Abo-Status (aktiv/inaktiv, Ablaufdatum) mitteilt. RevenueCat erhält dabei eine anonyme, gerätebezogene Nutzer-ID sowie Kaufinformationen von Apple, jedoch keine Zahlungsdaten. Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).<br>
+    <a href="https://www.revenuecat.com/privacy/" target="_blank">RevenueCat Datenschutzrichtlinie →</a> · <a href="https://www.apple.com/legal/privacy/de-ww/" target="_blank">Apple Datenschutzrichtlinie →</a></p>
+    <p style="margin-top:12px"><strong>Google Sign-In SDK (in der iOS-App)</strong><br>
+    Für die Anmeldung mit einem Google-Konto nutzt die iOS-App das native Google-Sign-In-SDK von Google. Dieses SDK kann sich eigenständig initialisieren und dabei technische Geräteinformationen verarbeiten, unabhängig davon, ob du dich tatsächlich mit Google anmeldest.<br>
+    <a href="https://policies.google.com/privacy" target="_blank">Google Datenschutzrichtlinie →</a></p>
     <p style="margin-top:12px"><strong>Google Gemini (Google Ireland Ltd.)</strong><br>
     Fuer den optionalen Rezept-Import per Foto oder Link nutzt famiplan die KI Google Gemini (kostenpflichtige API), um Zutaten und Zubereitungsschritte automatisch zu erkennen. Dabei wird das hochgeladene Foto bzw. der Inhalt der verlinkten Seite zur Verarbeitung an Google uebermittelt. Laut den Nutzungsbedingungen der kostenpflichtigen Gemini-API verwendet Google diese Inhalte nicht zum Training seiner KI-Modelle. Zur Erkennung von Missbrauch koennen Anfragen fuer eine begrenzte Zeit protokolliert werden. Die Verarbeitung erfolgt auf Basis von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung durch aktive Nutzung der Funktion).<br>
     <a href="https://ai.google.dev/gemini-api/terms" target="_blank">Google Gemini API Nutzungsbedingungen &rarr;</a></p>
@@ -139,19 +145,23 @@
 
   <div class="card">
     <div class="card-title">Bezahlung & Abonnement</div>
-    <p>famiplan Plus ist ein optionales kostenpflichtiges Abonnement (monatlich oder jährlich). Die Zahlungsabwicklung erfolgt vollständig über <strong>LemonSqueezy</strong> (LS Technologies Inc., USA), der als Merchant of Record auftritt.</p>
-    <p><strong>Welche Daten bei einem Kauf verarbeitet werden:</strong></p>
+    <p>famiplan Plus ist ein optionales kostenpflichtiges Abonnement (monatlich oder jährlich). Je nachdem, auf welchem Weg du famiplan nutzt, läuft die Zahlungsabwicklung unterschiedlich:</p>
+    <p><strong>In der iOS-App:</strong><br>
+    Der Kauf erfolgt ausschließlich über Apples In-App-Kauf-System. Apple übernimmt die komplette Zahlungsabwicklung; wir erhalten keinerlei Zahlungs- oder Kartendaten. Zur Freischaltung nutzen wir <strong>RevenueCat</strong>, das den Kaufbeleg mit Apple verifiziert und uns lediglich den Abo-Status mitteilt.</p>
+    <p><strong>In der Web-Version:</strong><br>
+    Die Zahlungsabwicklung erfolgt über <strong>LemonSqueezy</strong> (LS Technologies Inc., USA), der als Merchant of Record auftritt.</p>
+    <p><strong>Welche Daten dabei verarbeitet werden:</strong></p>
     <ul>
-      <li>E-Mail-Adresse (für Rechnung und Abo-Verwaltung)</li>
-      <li>Zahlungsdaten (Kreditkarte o. ä. – direkt bei LemonSqueezy, nicht bei uns)</li>
+      <li>E-Mail-Adresse (für Rechnung und Abo-Verwaltung – bei Apple-Käufen direkt bei Apple)</li>
+      <li>Zahlungsdaten (Kreditkarte o. ä. – direkt bei Apple bzw. LemonSqueezy, nicht bei uns)</li>
       <li>Rechnungsadresse (falls steuerlich erforderlich)</li>
-      <li>Transaktions-ID und Abo-Status (wird in Firebase gespeichert, um die Premium-Funktion freizuschalten)</li>
+      <li>Abo-Status und Ablaufdatum (wird in Firebase gespeichert, um die Premium-Funktion freizuschalten)</li>
     </ul>
     <p><strong>Was wir in Firebase speichern:</strong><br>
-    Nach einem erfolgreichen Kauf speichern wir ausschließlich den Abo-Status (aktiv/inaktiv) und das Ablaufdatum in deinem Familienprofil. Vollständige Zahlungsdaten werden bei uns nie gespeichert.</p>
+    Nach einem erfolgreichen Kauf speichern wir ausschließlich den Abo-Status (aktiv/inaktiv) und das Ablaufdatum in deinem Familienprofil. Vollständige Zahlungsdaten werden bei uns nie gespeichert, unabhängig vom Kaufweg.</p>
     <p><strong>Kündigung:</strong><br>
-    Du kannst dein Abonnement jederzeit über den Link in deiner Abo-Bestätigungs-E-Mail von LemonSqueezy kündigen. Nach der Kündigung bleibt der Zugang bis zum Ende des bezahlten Zeitraums aktiv.</p>
-    <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). LemonSqueezy kann Daten in die USA übertragen; dies erfolgt auf Basis von Standardvertragsklauseln (SCCs) gemäß Art. 46 DSGVO.</p>
+    Bei einem Kauf über die iOS-App verwaltest und kündigst du dein Abo direkt über deine Apple-ID-Einstellungen (Einstellungen → [Dein Name] → Abonnements). Bei einem Kauf über die Web-Version kannst du über den Link in deiner Abo-Bestätigungs-E-Mail von LemonSqueezy kündigen. In beiden Fällen bleibt der Zugang bis zum Ende des bezahlten Zeitraums aktiv.</p>
+    <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). LemonSqueezy und RevenueCat können Daten in die USA übertragen; dies erfolgt auf Basis von Standardvertragsklauseln (SCCs) gemäß Art. 46 DSGVO.</p>
   </div>
 
   <div class="card">
