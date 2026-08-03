@@ -17,6 +17,12 @@ function loadScript(src) {
 
 // ── INIT ──────────────────────────────────────────────────────
 export async function initFirebaseAuth(onSuccess, onFailure) {
+  // "Mit Apple anmelden" ist nur auf iOS Pflicht/sinnvoll (App-Store-Richtlinie 4.8) -
+  // auf Web/PWA fehlt die dafür nötige Services-ID/Domain-Verifizierung, Button bleibt versteckt.
+  const isNativeIOS = window.Capacitor?.isNativePlatform?.() && window.Capacitor?.getPlatform?.() === 'ios';
+  const appleBtn = document.getElementById('auth-apple-btn');
+  if (appleBtn && isNativeIOS) appleBtn.style.display = '';
+
   try {
     await Promise.race([
       (async () => {
