@@ -256,7 +256,7 @@ export async function authApple() {
   // wie gewohnt weiterläuft (gleiches Prinzip wie bei authGoogle()).
   if (isNativeIOS) {
     try {
-      const result = await FirebaseAuthentication.signInWithApple();
+      const result = await FirebaseAuthentication.signInWithApple({ skipNativeAuth: true });
       const idToken = result?.credential?.idToken;
       const nonce   = result?.credential?.nonce;
       if (!idToken) throw new Error('Kein idToken vom nativen Apple-Sign-In erhalten');
