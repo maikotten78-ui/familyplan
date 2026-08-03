@@ -206,7 +206,6 @@ export async function authGoogle() {
   if (err) err.textContent = '';
 
   const isNativeIOS = window.Capacitor?.isNativePlatform?.() && window.Capacitor?.getPlatform?.() === 'ios';
-  console.log('[authGoogle] isNativeIOS:', isNativeIOS, '| Capacitor vorhanden:', !!window.Capacitor, '| Platform:', window.Capacitor?.getPlatform?.());
 
   // Native iOS: Web-Popup/Redirect funktioniert nicht in der WKWebView (von Google
   // seit 2021 blockiert). Stattdessen natives Google-Sign-In über das Plugin, danach
@@ -214,18 +213,13 @@ export async function authGoogle() {
   // der App (state.firebaseAuth) wie gewohnt weiterläuft.
   if (isNativeIOS) {
     try {
-      console.log('[authGoogle] FirebaseAuthentication Plugin-Objekt:', FirebaseAuthentication);
-      console.log('[authGoogle] rufe signInWithGoogle() auf...');
       const result = await FirebaseAuthentication.signInWithGoogle();
-      console.log('[authGoogle] signInWithGoogle() Ergebnis:', result);
       const idToken     = result?.credential?.idToken;
       const accessToken = result?.credential?.accessToken;
       if (!idToken) throw new Error('Kein idToken vom nativen Google-Sign-In erhalten');
       const credential = window.firebase.auth.GoogleAuthProvider.credential(idToken, accessToken);
       await state.firebaseAuth.signInWithCredential(credential);
-      console.log('[authGoogle] signInWithCredential() erfolgreich');
     } catch (e) {
-      console.error('[authGoogle] Fehler:', e);
       if (err) err.textContent = authErrorMessage(e.code) || e.message || 'Google-Anmeldung fehlgeschlagen';
     }
     return;
@@ -239,6 +233,42 @@ export async function authGoogle() {
     } else {
       await state.firebaseAuth.signInWithPopup(provider);
     }
+  } catch (e) {
+    if (err) err.textContent = authErrorMessage(e.code);
+  }
+}
+
+// ── APPLE ─────────────────────────────────────────────────────
+export async function authApple() {
+  const err = document.getElementById('auth-err');
+  if (err) err.textContent = '';
+
+  const isNativeIOS = window.Capacitor?.isNativePlatform?.() && window.Capacitor?.getPlatform?.() === 'ios';
+
+  // Native iOS: nutzt Apples eigene AuthenticationServices (kein Web-Popup nötig/möglich).
+  // idToken + nonce werden an die JS-Firebase-Instanz übergeben, damit state.firebaseAuth
+  // wie gewohnt weiterläuft (gleiches Prinzip wie bei authGoogle()).
+  if (isNativeIOS) {
+    try {
+      const result = await FirebaseAuthentication.signInWithApple();
+      const idToken = result?.credential?.idToken;
+      const nonce   = result?.credential?.nonce;
+      if (!idToken) throw new Error('Kein idToken vom nativen Apple-Sign-In erhalten');
+      const provider   = new window.firebase.auth.OAuthProvider('apple.com');
+      const credential = provider.credential({ idToken, rawNonce: nonce });
+      await state.firebaseAuth.signInWithCredential(credential);
+    } catch (e) {
+      if (err) err.textContent = authErrorMessage(e.code) || e.message || 'Apple-Anmeldung fehlgeschlagen';
+    }
+    return;
+  }
+
+  // Web/Android: Firebase-Popup mit dem Apple-OAuth-Provider
+  try {
+    const provider = new window.firebase.auth.OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
+    await state.firebaseAuth.signInWithPopup(provider);
   } catch (e) {
     if (err) err.textContent = authErrorMessage(e.code);
   }

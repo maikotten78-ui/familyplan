@@ -10,7 +10,7 @@ import { escapeHtml, escapeAttr, localISO } from './modules/utils.js';
 
 // Auth
 import { initFirebaseAuth, showAuthScreen, showAuthScreenDirect,
-         authSetMode, authSubmit, authGoogle, authForgotPassword,
+         authSetMode, authSubmit, authGoogle, authApple, authForgotPassword,
          authTogglePasswordVisibility,
          proceedAfterAuth, saveUserFamily, authSignOut,
          deleteAccount, showDeleteAccountModal } from './modules/auth.js';
@@ -612,7 +612,7 @@ window._app = {
   setTab, setDay, openModal, closeModal, showSync,
   startTabTour,
   getTab: () => state.tab,
-  authSetMode, authSubmit, authGoogle, authForgotPassword,
+  authSetMode, authSubmit, authGoogle, authApple, authForgotPassword,
   authTogglePasswordVisibility,
   authSignOut: () => authSignOut(),
   deleteAccount: () => deleteAccount(showSync, closeModal, () => {}),
