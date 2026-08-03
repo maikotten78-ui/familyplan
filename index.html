@@ -769,9 +769,9 @@
 
 /* ── 7-SPALTEN-WOCHENANSICHT ─────────────────────────────────── */
 .wk7-wrap{margin-top:4px;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.10);border:1.5px solid var(--tl-line)}
-.wk7-header{display:grid;grid-template-columns:40px repeat(7,1fr);border-bottom:2px solid var(--tl-col-sep);position:sticky;top:0;background:var(--surface);z-index:3}
+.wk7-header{display:grid;grid-template-columns:40px repeat(7,minmax(0,1fr));border-bottom:2px solid var(--tl-col-sep);position:sticky;top:0;background:var(--surface);z-index:3}
 .wk7-hour-spacer{border-right:2px solid var(--tl-col-sep);background:var(--bg3)}
-.wk7-col-hdr{text-align:center;padding:6px 2px;cursor:pointer;border-right:1.5px solid var(--tl-col-sep);transition:background 0.15s}
+.wk7-col-hdr{text-align:center;padding:6px 2px;cursor:pointer;border-right:1.5px solid var(--tl-col-sep);transition:background 0.15s;min-width:0;overflow:hidden}
 .wk7-col-hdr:last-child{border-right:none}
 .wk7-col-hdr.today{background:#1D7A87}
 .wk7-col-hdr.selected{background:var(--accent-bg)}
@@ -783,7 +783,7 @@
 .wk7-col-hdr.today .wk7-hdr-num{color:white}
 .wk7-body{display:flex;overflow-y:auto;max-height:500px;background:var(--surface);scrollbar-width:none;-ms-overflow-style:none}
 .wk7-body::-webkit-scrollbar{display:none}
-.wk7-cols{display:grid;grid-template-columns:repeat(7,1fr);flex:1}
+.wk7-cols{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));flex:1;min-width:0}
 .wk7-col{position:relative;border-right:1.5px solid var(--tl-col-sep);cursor:pointer}
 .wk7-col::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent,transparent 51px,#E8EAF0 51px,#E8EAF0 52px);pointer-events:none;z-index:0}
 .wk7-col:last-child{border-right:none}
