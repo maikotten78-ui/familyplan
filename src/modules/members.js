@@ -283,6 +283,26 @@ export function showEditMemberModal(name, openModal) {
   `);
 }
 
+// ── PROFIL-BELEGUNG PRÜFEN (Sicherheit: verhindert Identitäts-Wechsel) ──
+// Liefert: welcher Name ist bereits an den aktuell angemeldeten Account
+// gebunden (myBoundName), und welche Namen sind an ANDERE Accounts
+// gebunden (claimedByOthers). Damit lässt sich verhindern, dass ein
+// Account sich als ein anderes, bereits verknüpftes Familienmitglied
+// ausgibt.
+export async function getMemberClaimInfo() {
+  const myUid = state.currentAuthUser?.uid;
+  let entries = {};
+  try { entries = (await fbGet('memberUids')) || {}; } catch (e) { /* non-kritisch */ }
+  let myBoundName = null;
+  const claimedByOthers = {};
+  for (const [uid, info] of Object.entries(entries)) {
+    if (!info?.name) continue;
+    if (uid === myUid) { myBoundName = info.name; }
+    else { claimedByOthers[info.name] = uid; }
+  }
+  return { myBoundName, claimedByOthers };
+}
+
 // ── ACCOUNT ↔ MITGLIED-VERKNÜPFUNG (fuer Zugriffs-Verwaltung) ──
 // Verknuepft den aktuell angemeldeten Firebase-Account (UID) mit dem
 // Profil-Namen, den er beim Beitreten/Erstellen gewaehlt hat. Getrennt

@@ -19,7 +19,7 @@ import { initFirebaseAuth, showAuthScreen, showAuthScreenDirect,
 import { loadMembers, saveMember, renameMember, deleteMember,
          loadPhotos, savePhotoToFirebase, handlePhotoUpload,
          showAddMemberModal, showEditMemberModal,
-         bindMemberUid, loadConnectedAccounts, revokeMemberAccess } from './modules/members.js';
+         bindMemberUid, loadConnectedAccounts, revokeMemberAccess, getMemberClaimInfo } from './modules/members.js';
 
 // Tasks
 import { loadTasks, subscribeToTasks, addTask, saveEdit, assignTask, unassign,
@@ -1260,6 +1260,17 @@ export function appInit() {
       loadMembers(renderContent, _showAddMember).then(loadAll);
       bindMemberUid(savedUser).catch(() => {}); // Selbstheilung fuer Alt-Accounts ohne Verknuepfung
 
+      // Sicherheits-Korrektur: falls dieser Account VOR dem Identitaets-Fix schon
+      // an ein anderes Profil gebunden wurde (z.B. ueber den frueheren "Wer bist
+      // du?"-Exploit), lokal gespeicherten curUser auf die echte Bindung zuruecksetzen.
+      getMemberClaimInfo().then(({ myBoundName }) => {
+        if (myBoundName && myBoundName !== savedUser) {
+          try { localStorage.setItem('fp_user', myBoundName); } catch {}
+          setState({ curUser: myBoundName });
+          renderContent();
+        }
+      }).catch(() => {});
+
       if ('Notification' in window && Notification.permission === 'default' && !localStorage.getItem('fp_push_prompted')) {
         localStorage.setItem('fp_push_prompted', '1');
         // Push-Seite – wird in Phase 5 implementiert
@@ -1297,22 +1308,42 @@ export function appInit() {
   }
 }
 
-function showNameScreen() {
+async function showNameScreen() {
   const ns = document.getElementById('name-screen');
   if (ns) { ns.style.display = 'flex'; ns.style.opacity = '1'; ns.classList.add('visible'); }
   const grid = document.getElementById('name-grid');
   if (!grid) return;
   if (state.members.length === 0) { showAddMemberModal(true, openModal, closeModal, showSync, () => {}); return; }
+
   grid.innerHTML = state.members.map(m =>
-    `<button class="name-btn" onclick="window._app.selectName('${escapeAttr(m)}')">
+    `<button class="name-btn" onclick="window._app.selectName('${escapeAttr(m)}')" disabled style="opacity:0.5">
        <div class="name-av">${state.av[m] || '👤'}</div>
        <div class="name-nm">${escapeHtml(m)}</div>
      </button>`
-  ).join('');
+  ).join('<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px 0">wird geprüft…</div>');
+
+  // Sicherheits-Check: welche Profile sind schon an einen ANDEREN Account gebunden?
+  // Erst danach werden die Buttons freigeschaltet, damit niemand ein bereits
+  // vergebenes Profil übernehmen kann.
+  const { claimedByOthers } = await getMemberClaimInfo();
+  grid.innerHTML = state.members.map(m => {
+    const locked = !!claimedByOthers[m];
+    return locked
+      ? `<button class="name-btn" disabled style="opacity:0.4;cursor:not-allowed" title="Dieses Profil ist bereits vergeben">
+           <div class="name-av">${state.av[m] || '👤'}</div>
+           <div class="name-nm">${escapeHtml(m)} 🔒</div>
+         </button>`
+      : `<button class="name-btn" onclick="window._app.selectName('${escapeAttr(m)}')">
+           <div class="name-av">${state.av[m] || '👤'}</div>
+           <div class="name-nm">${escapeHtml(m)}</div>
+         </button>`;
+  }).join('');
 }
 
 
-window._app.selectName = (name) => {
+window._app.selectName = async (name) => {
+  const { claimedByOthers } = await getMemberClaimInfo();
+  if (claimedByOthers[name]) { alert('Dieses Profil ist bereits einem anderen Account zugeordnet.'); showNameScreen(); return; }
   try { localStorage.setItem('fp_user', name); } catch {}
   setState({ curUser: name });
   bindMemberUid(name).catch(() => {});

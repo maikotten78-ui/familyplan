@@ -11,7 +11,7 @@ import { saveMeal, toggleOptionalIngredient, deleteMealRecipe, saveRecipeSteps }
 import { isPremiumActive, isAdmin } from '../modules/premium.js';
 import { openModal, closeModal, showSync } from './modal.js';
 import { renderContent } from './render.js';
-import { loadConnectedAccounts, revokeMemberAccess } from '../modules/members.js';
+import { loadConnectedAccounts, revokeMemberAccess, bindMemberUid, getMemberClaimInfo } from '../modules/members.js';
 
 // ── Optionale Zutaten Checkboxen ─────────────────────────────
 function rebuildOptChecks(val, selectedList) {
@@ -1130,7 +1130,7 @@ function buildPlanSection() {
   return `<button style="width:100%;margin-top:6px;padding:11px;border:none;border-radius:10px;background:#1D7A87;color:white;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit" onclick="window._app.closeModal();window._app.showUpgradeModal()">⭐ famiplan Plus</button>`;
 }
 
-export function showUserModal() {
+export async function showUserModal() {
   // App-Store-Hinweis: nur iOS-Web (nicht die native App selbst), nur
   // sobald die App im Store gelistet ist (APP_STORE_URL gesetzt, siehe
   // config.js). Dauerhaft im Menue verfuegbar, falls der einmalige
@@ -1140,16 +1140,28 @@ export function showUserModal() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const showAppStoreLink = isIOS && !isNativeApp && !!APP_STORE_URL;
 
+  openModal(`<div class="modal-handle"></div><div class="modal-title">👋 Wer bist du?</div><div class="modal-sub">Lädt…</div>`);
+
+  // Sicherheits-Check: welches Profil gehört wirklich zu diesem Account, und
+  // welche Profile gehören zu ANDEREN Accounts? Verhindert, dass sich jemand
+  // fälschlich als ein anderes Familienmitglied ausgibt.
+  const { myBoundName, claimedByOthers } = await getMemberClaimInfo();
+
   const btns = state.members.map(m => {
     const av = state.photos?.[m]
       ? `<img src="${state.photos[m]}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">`
       : (state.av[m] || '👤');
+    // Gesperrt, wenn: dieser Account schon an ein ANDERES Profil gebunden ist,
+    // ODER dieses Profil bereits einem anderen Account gehört.
+    const isMine  = myBoundName ? myBoundName === m : state.curUser === m;
+    const locked  = myBoundName ? !isMine : !!claimedByOthers[m];
+    const editBtn = `<span onclick="event.stopPropagation();window._app.showEditMemberModal('${escapeAttr(m)}')"
+            style="position:absolute;bottom:-5px;right:-5px;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.2);line-height:1">✏️</span>`;
     return `<div style="position:relative">
-      <button class="member-btn${state.curUser === m ? ' sel' : ''}" onclick="window._app.selectUser('${escapeAttr(m)}')">
+      <button class="member-btn${isMine ? ' sel' : ''}" ${locked ? 'disabled style="opacity:0.45;cursor:not-allowed" title="Gehört zu einem anderen Account"' : `onclick="window._app.selectUser('${escapeAttr(m)}')"`}>
         <div class="member-av" style="position:relative;display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center">
-          ${av}
-          <span onclick="event.stopPropagation();window._app.showEditMemberModal('${escapeAttr(m)}')"
-            style="position:absolute;bottom:-5px;right:-5px;background:var(--surface);border:1px solid var(--border);border-radius:50%;width:18px;height:18px;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.2);line-height:1">✏️</span>
+          ${av}${locked ? ' 🔒' : ''}
+          ${!locked ? editBtn : ''}
         </div>
         <div class="member-nm">${escapeHtml(m)}</div>
       </button>
@@ -1229,7 +1241,17 @@ export function confirmRevokeMemberAccess(uid, name) {
   });
 }
 
-export function selectUser(name) {
+export async function selectUser(name) {
+  const { myBoundName, claimedByOthers } = await getMemberClaimInfo();
+  if (myBoundName && myBoundName !== name) {
+    alert('Dieser Account gehört bereits zu „' + myBoundName + '". Der Profil-Wechsel ist aus Sicherheitsgründen nicht möglich.');
+    return;
+  }
+  if (!myBoundName && claimedByOthers[name]) {
+    alert('Dieses Profil ist bereits einem anderen Account zugeordnet.');
+    return;
+  }
+  if (!myBoundName) bindMemberUid(name).catch(() => {});
   setState({ curUser: name });
   try { localStorage.setItem('fp_user', name); } catch {}
   const ub = document.getElementById('user-btn');
