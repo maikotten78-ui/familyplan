@@ -583,9 +583,14 @@ function render3DayTimeline(centerISO) {
   if (!allTasks.length) return '';
 
   const hourPx = 56;
-  const hours  = allTasks.map(t => parseInt(t.time.split(':')[0]));
-  const minH   = Math.max(0, Math.min(...hours) - 1);
-  const maxH   = Math.min(23, Math.max(...hours) + 2);
+  const starts = allTasks.map(t => parseInt(t.time.split(':')[0]));
+  const ends   = allTasks.map(t => {
+    if (!t.endTime) return parseInt(t.time.split(':')[0]) + 1;
+    const [eh, em] = t.endTime.split(':').map(Number);
+    return em > 0 ? eh + 1 : eh;
+  });
+  const minH   = Math.max(0, Math.min(...starts) - 1);
+  const maxH   = Math.min(23, Math.max(...starts, ...ends) + 1);
 
   // Stundenspalte links
   let hourRows = '';
@@ -683,9 +688,14 @@ function render1DayTimeline(iso) {
   if (!dayTasks.length && !allDayTasks.length) return '';
 
   const hourPx = 56;
-  const hours  = dayTasks.map(t => parseInt(t.time.split(':')[0]));
-  const minH   = dayTasks.length ? Math.max(0, Math.min(...hours) - 1) : 7;
-  const maxH   = dayTasks.length ? Math.min(23, Math.max(...hours) + 2) : 21;
+  const starts = dayTasks.map(t => parseInt(t.time.split(':')[0]));
+  const ends   = dayTasks.map(t => {
+    if (!t.endTime) return parseInt(t.time.split(':')[0]) + 1;
+    const [eh, em] = t.endTime.split(':').map(Number);
+    return em > 0 ? eh + 1 : eh;
+  });
+  const minH   = dayTasks.length ? Math.max(0, Math.min(...starts) - 1) : 7;
+  const maxH   = dayTasks.length ? Math.min(23, Math.max(...starts, ...ends) + 1) : 21;
 
   let hourRows = '';
   for (let h = minH; h <= maxH; h++) {
@@ -751,8 +761,13 @@ function renderTimeline(iso) {
     return `<div class="timeline-wrap"><div class="timeline-header"><div class="timeline-title">${label}</div><button class="timeline-toggle" onclick="window._app.setDayView('timeline')">⏱ Zeitstrahl</button></div>${dayTasks.map(t => cardV2HTML(t, iso)).join('')}</div>`;
   }
 
-  const hours = dayTasks.map(t => parseInt(t.time.split(':')[0]));
-  const minH  = Math.max(0, Math.min(...hours) - 1), maxH = Math.min(23, Math.max(...hours) + 2);
+  const starts = dayTasks.map(t => parseInt(t.time.split(':')[0]));
+  const ends   = dayTasks.map(t => {
+    if (!t.endTime) return parseInt(t.time.split(':')[0]) + 1;
+    const [eh, em] = t.endTime.split(':').map(Number);
+    return em > 0 ? eh + 1 : eh;
+  });
+  const minH  = Math.max(0, Math.min(...starts) - 1), maxH = Math.min(23, Math.max(...starts, ...ends) + 1);
   const hourPx = 60;
 
   const assignees  = [...new Set(dayTasks.map(t => getA(t, iso).assignedTo).filter(Boolean))];
@@ -904,10 +919,18 @@ export function renderCalendar() {
 
     // #4: Immer Stundenraster zeigen – auch bei leerer Woche
     {
-      const hourPx = 52;
-      const hours  = allWeekTasks.map(t => parseInt(t.time.split(':')[0]));
-      const minH   = allWeekTasks.length ? Math.max(0, Math.min(...hours) - 1) : 7;
-      const maxH   = allWeekTasks.length ? Math.min(23, Math.max(...hours) + 2) : 21;
+      const hourPx  = 52;
+      const starts  = allWeekTasks.map(t => parseInt(t.time.split(':')[0]));
+      // Endzeiten mit einbeziehen, damit lange Termine nicht am unteren Rand
+      // abgeschnitten werden - vorher wurde maxH nur aus den Start-Stunden
+      // berechnet, ein Termin 15:30-22:00 konnte so über das Raster hinauslaufen.
+      const ends    = allWeekTasks.map(t => {
+        if (!t.endTime) return parseInt(t.time.split(':')[0]) + 1;
+        const [eh, em] = t.endTime.split(':').map(Number);
+        return em > 0 ? eh + 1 : eh;
+      });
+      const minH   = allWeekTasks.length ? Math.max(0, Math.min(...starts) - 1) : 7;
+      const maxH   = allWeekTasks.length ? Math.min(23, Math.max(...starts, ...ends) + 1) : 21;
       const totalH = (maxH - minH + 1) * hourPx;
 
       // Jetzt-Linie Position
