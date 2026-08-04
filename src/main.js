@@ -638,16 +638,19 @@ window._app = {
     } else {
       // Wiederkehrende Task: die aktuell überfälligen VERGANGENEN Vorkommen als
       // erledigt markieren, damit die Karte aus dem "Nicht erledigt"-Bereich
-      // verschwindet. Der heutige Termin bleibt offen und lässt sich normal
-      // abhaken (vorher passierte hier gar nichts - die Karte blieb dauerhaft
-      // überfällig stehen).
+      // verschwindet. Zusätzlich heute explizit als Extra-Vorkommen eintragen
+      // (includedDates) - sonst würde die Aufgabe komplett unsichtbar werden,
+      // falls das normale Wiederholungsmuster (z.B. "nur montags") den
+      // heutigen Tag gar nicht einschließt.
       const { getOverdueDates } = await import('./modules/tasks.js');
       const dates = getOverdueDates(task);
       let assignments = task.assignments || {};
       dates.forEach(d => { assignments = { ...assignments, [d]: { ...(assignments[d] || {}), done: true } }; });
+      const today = localISO();
+      const includedDates = Array.from(new Set([...(task.includedDates || []), today]));
       const { id: _, ...rest } = task;
-      await fbSet('tasks/' + id, { ...rest, assignments });
-      setState({ tasks: state.tasks.map(t => t.id === id ? { ...t, assignments } : t) });
+      await fbSet('tasks/' + id, { ...rest, assignments, includedDates });
+      setState({ tasks: state.tasks.map(t => t.id === id ? { ...t, assignments, includedDates } : t) });
     }
     showSync('→ Für heute vorgemerkt');
     renderContent();

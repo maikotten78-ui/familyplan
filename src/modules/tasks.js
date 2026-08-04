@@ -59,6 +59,9 @@ export function setA(t, iso, patch) {
 export function isVisible(t, dayName, viewISO) {
   if (t.openTodo) return true;
   if (t.excludedDates && t.excludedDates.includes(viewISO)) return false;
+  // Erzwungene Extra-Vorkommen (z.B. per "Auf heute verschieben" bei überfälligen
+  // wiederkehrenden Aufgaben, deren normales Muster diesen Tag nicht einschließt)
+  if (t.includedDates && t.includedDates.includes(viewISO)) return true;
   if (t.recurring === 'once') {
     // Ganztägiges mehrtägiges Event: an jedem Tag zwischen date und endDate sichtbar
     if (t.type === 'event' && t.endDate && t.endDate > t.date) {
