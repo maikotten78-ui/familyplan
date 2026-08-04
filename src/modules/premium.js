@@ -95,7 +95,11 @@ export function renderTrialBanner() {
 }
 
 // ── RATE LIMIT ────────────────────────────────────────────────
-import { RL_LIMITS, DB_ROOT as _DB_ROOT } from './config.js';
+// Nutzt Firebase transaction() statt eines einfachen Lesen-dann-Schreiben,
+// damit zwei fast gleichzeitige Anfragen sich nicht gegenseitig überholen
+// koennen (Firebase loest Konflikte serverseitig auf und wiederholt den
+// Versuch automatisch mit dem aktuellen Wert).
+import { RL_LIMITS } from './config.js';
 import { DB } from './state.js';
 
 export async function checkRateLimit(action) {
@@ -104,16 +108,17 @@ export async function checkRateLimit(action) {
   const uid   = state.currentAuthUser.uid;
   const win   = Math.floor(Date.now() / 3600000); // 1h window
   try {
-    const r     = await fbFetch(`${_DB_ROOT}/ratelimit/${uid}/${action}/${win}.json`);
-    const count = (await r.json()) || 0;
-    if (count >= limit) {
+    if (!window.firebase?.database) return true; // SDK noch nicht bereit - nicht blockieren
+    const ref = window.firebase.database().ref(`ratelimit/${uid}/${action}/${win}`);
+    const result = await ref.transaction(current => {
+      const count = current || 0;
+      if (count >= limit) return; // abbrechen (undefined) - kein Schreibvorgang, Limit erreicht
+      return count + 1;
+    });
+    if (!result.committed) {
       alert(`Zu viele Aktionen. Bitte warte kurz.`);
       return false;
     }
-    await fbFetch(`${_DB_ROOT}/ratelimit/${uid}/${action}/${win}.json`, {
-      method: 'PUT',
-      body:   JSON.stringify(count + 1),
-    });
     return true;
   } catch (e) { return true; }
 }
