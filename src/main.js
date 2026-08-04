@@ -627,18 +627,27 @@ window._app = {
   overdueSnooze: async (id, iso) => {
     const task = state.tasks.find(t => t.id === id);
     if (!task) return;
+    const { fbSet } = await import('./modules/firebase.js');
     if (task.recurring === 'once') {
       // Einmalige Task: auf heute verschieben
       const { id: _, ...rest } = task;
       const today = localISO();
       const { dayFromISO } = await import('./modules/utils.js');
-      await import('./modules/firebase.js').then(({ fbSet }) =>
-        fbSet('tasks/' + id, { ...rest, date: today, day: dayFromISO(today) })
-      );
+      await fbSet('tasks/' + id, { ...rest, date: today, day: dayFromISO(today) });
       setState({ tasks: state.tasks.map(t => t.id === id ? { ...t, date: today, day: dayFromISO(today) } : t) });
     } else {
-      // Wiederkehrende Task: heutigen Tag als done markieren damit sie heute erscheint
-      // nichts tun – sie erscheint automatisch heute in der normalen Liste
+      // Wiederkehrende Task: die aktuell überfälligen VERGANGENEN Vorkommen als
+      // erledigt markieren, damit die Karte aus dem "Nicht erledigt"-Bereich
+      // verschwindet. Der heutige Termin bleibt offen und lässt sich normal
+      // abhaken (vorher passierte hier gar nichts - die Karte blieb dauerhaft
+      // überfällig stehen).
+      const { getOverdueDates } = await import('./modules/tasks.js');
+      const dates = getOverdueDates(task);
+      let assignments = task.assignments || {};
+      dates.forEach(d => { assignments = { ...assignments, [d]: { ...(assignments[d] || {}), done: true } }; });
+      const { id: _, ...rest } = task;
+      await fbSet('tasks/' + id, { ...rest, assignments });
+      setState({ tasks: state.tasks.map(t => t.id === id ? { ...t, assignments } : t) });
     }
     showSync('→ Für heute vorgemerkt');
     renderContent();
