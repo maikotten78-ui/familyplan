@@ -2,8 +2,66 @@ import { state, setState } from './state.js';
 import { fbGet, fbSet, fbDel } from './firebase.js';
 import { escapeHtml } from './utils.js';
 import { checkFreeLimit, isPremiumActive } from './premium.js';
+import { registerListener } from './listener.js';
 
-// ── LOAD ──────────────────────────────────────────────────────
+// ── REALTIME SUBSCRIBE ────────────────────────────────────────
+// Ersetzt den 5-Sekunden-Poll durch einen Firebase onValue-Listener
+// (gleiches Muster wie subscribeToTasks/subscribeToShopping). loadBoard()
+// bleibt als Fallback erhalten, falls das Database-SDK noch nicht bereit
+// ist oder der Listener nicht rechtzeitig antwortet.
+export function subscribeToBoard(renderContent, updateBoardBadge) {
+  if (!state.familyId || localStorage.getItem('fp_demo_mode') === '1') return;
+  state._boardLastVisible = Date.now();
+
+  if (!state.currentAuthUser || !window.firebase?.database) {
+    console.warn('subscribeToBoard: Database SDK nicht bereit, Fallback auf loadBoard');
+    loadBoard(renderContent, updateBoardBadge);
+    return;
+  }
+
+  let isFirstLoad = true; // beim allerersten Laden nichts als "neu" toasten
+  const ref = window.firebase.database().ref(`families/${state.familyId}/board`);
+
+  let initialValueReceived = false;
+  const fallbackTimer = setTimeout(() => {
+    if (!initialValueReceived) {
+      console.warn('subscribeToBoard: Listener timeout, Fallback auf loadBoard');
+      ref.off('value', callback);
+      loadBoard(renderContent, updateBoardBadge);
+    }
+  }, 8000);
+
+  const callback = ref.on('value', snapshot => {
+    if (!initialValueReceived) {
+      initialValueReceived = true;
+      clearTimeout(fallbackTimer);
+    }
+    const oldPosts = state.boardPosts || {};
+    const data = snapshot.val();
+    const newStr = JSON.stringify(data || {});
+    if (newStr !== JSON.stringify(oldPosts)) {
+      if (!isFirstLoad && state.tab === 'overview') {
+        const newPosts = Object.entries(data || {})
+          .filter(([id, p]) => !oldPosts[id] && p.author !== state.curUser)
+          .sort((a, b) => b[1].ts - a[1].ts);
+        if (newPosts.length) showBoardToast(newPosts[0][1]);
+      }
+      setState({ boardPosts: data || {} });
+      updateBoardBadge();
+      if (state.tab === 'overview') renderContent();
+    }
+    if (state.tab === 'overview') boardMarkPostsRead();
+    isFirstLoad = false;
+  }, err => {
+    console.warn('subscribeToBoard listener error:', err.message);
+    clearTimeout(fallbackTimer);
+    loadBoard(renderContent, updateBoardBadge);
+  });
+
+  registerListener('board', () => ref.off('value', callback));
+}
+
+// ── LOAD (Fallback für subscribeToBoard) ────────────────────────
 export async function loadBoard(renderContent, updateBoardBadge) {
   if (!state.familyId || localStorage.getItem('fp_demo_mode') === '1') return;
   state._boardLastVisible = Date.now();

@@ -3,6 +3,7 @@ import { fbGet, fbSet, fbPush, fbDel, fbFetch } from './firebase.js';
 import { DB } from './state.js';
 import { saveCache, loadCache } from './cache.js';
 import { escapeHtml, escapeAttr } from './utils.js';
+import { registerListener } from './listener.js';
 
 export const SHOP_CATS = [
   { id: 'obst',      name: 'Obst & Gemüse',   icon: '🥦' },
@@ -74,7 +75,77 @@ async function fbMultiPath(updates) {
   return res.json();
 }
 
-// ── LOAD ──────────────────────────────────────────────────────
+// ── REALTIME SUBSCRIBE ────────────────────────────────────────
+// Ersetzt den 5-Sekunden-Poll durch einen Firebase onValue-Listener
+// (gleiches Muster wie subscribeToTasks in tasks.js). loadShopping()
+// bleibt als Fallback erhalten, falls das Database-SDK noch nicht
+// bereit ist oder der Listener nicht rechtzeitig antwortet.
+export function subscribeToShopping(renderContent) {
+  if (!state.familyId) { console.warn('subscribeToShopping: no familyId'); return; }
+
+  const cachedItems = loadCache('shopItems');
+  const cachedLists = loadCache('shopLists');
+  if (cachedItems?.length) setState({ shopItems: cachedItems });
+  if (cachedLists?.length) setState({ shopLists: cachedLists });
+  if ((cachedItems || cachedLists) && state.tab === 'shop') renderContent();
+
+  if (!state.currentAuthUser || !window.firebase?.database) {
+    console.warn('subscribeToShopping: Database SDK nicht bereit, Fallback auf loadShopping');
+    loadShopping(renderContent);
+    return;
+  }
+
+  const ref = window.firebase.database().ref(`families/${state.familyId}/shopping`);
+
+  let initialValueReceived = false;
+  const fallbackTimer = setTimeout(() => {
+    if (!initialValueReceived) {
+      console.warn('subscribeToShopping: Listener timeout, Fallback auf loadShopping');
+      ref.off('value', callback);
+      loadShopping(renderContent);
+    }
+  }, 8000);
+
+  const callback = ref.on('value', snapshot => {
+    if (window._shopPollPaused) return;
+    if (!initialValueReceived) {
+      initialValueReceived = true;
+      clearTimeout(fallbackTimer);
+    }
+    const data = snapshot.val();
+    if (data) {
+      if (data.lists) {
+        const lists = [...new Set(['Wocheneinkauf', ...data.lists])];
+        setState({ shopLists: lists });
+        saveCache('shopLists', lists);
+        if (!lists.includes(state.activeShopList)) {
+          setState({ activeShopList: lists[0] });
+          try { localStorage.setItem('fp_active_shop_list', lists[0]); } catch(e) {}
+        }
+      }
+      if (data.items) {
+        const newItems = Object.entries(data.items).map(([id, i]) => ({ id, ...i }));
+        const stableStr = items => items.map(i => [i.id, i.name, i.category, i.qty, i.unit, i.checked, i.list, i.mealRef || '', i.mealQty || ''].join('|')).sort().join('||');
+        if (stableStr(newItems) !== stableStr(state.shopItems)) {
+          setState({ shopItems: newItems });
+          saveCache('shopItems', newItems);
+          if (state.tab === 'shop') renderContent();
+        }
+      } else if (state.tab === 'shop') renderContent();
+    } else {
+      fbSet('shopping/lists', state.shopLists);
+      if (state.tab === 'shop') renderContent();
+    }
+  }, err => {
+    console.error('subscribeToShopping listener error:', err.message);
+    clearTimeout(fallbackTimer);
+    loadShopping(renderContent);
+  });
+
+  registerListener('shopping', () => ref.off('value', callback));
+}
+
+// ── LOAD (Fallback für subscribeToShopping) ────────────────────
 export async function loadShopping(renderContent) {
   if (window._shopPollPaused) return;
 

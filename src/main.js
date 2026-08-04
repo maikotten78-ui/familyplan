@@ -27,7 +27,7 @@ import { loadTasks, subscribeToTasks, addTask, saveEdit, assignTask, unassign,
          resetFd, isVisible, getA } from './modules/tasks.js';
 
 // Shopping
-import { loadShopping, shopAddItem, shopToggleCheck, shopToggleFav,
+import { loadShopping, subscribeToShopping, shopAddItem, shopToggleCheck, shopToggleFav,
          shopDeleteItem, shopSaveEdit, shopClearChecked,
          shopAddList, shopDeleteList, shopRecallCategory, shopRememberCategory } from './modules/shopping.js';
 
@@ -37,7 +37,7 @@ import { loadMeals, saveMeal, deleteMeal,
          toggleOptionalIngredient, saveRecipeSteps } from './modules/meals.js';
 
 // Board
-import { loadBoard, updateBoardBadge, boardToggleReaction,
+import { loadBoard, subscribeToBoard, updateBoardBadge, boardToggleReaction,
          boardDeletePost, boardSubmitPost, boardHandlePhoto,
          boardSubmitReply, boardDeleteReply,
          boardMarkPostsRead, boardShowReaders, boardTimeAgo } from './modules/board.js';
@@ -1257,11 +1257,11 @@ export function appInit() {
 
     const loadAll = () => {
       subscribeToTasks(renderContent, loadComments);
-      loadShopping(renderContent);
+      subscribeToShopping(renderContent);
       loadComments();
       loadPhotos();
       loadMeals(renderContent);
-      loadBoard(renderContent, updateBoardBadge);
+      subscribeToBoard(renderContent, updateBoardBadge);
       initCalendarSyncTriggers(); // no-op solange CALENDAR_SYNC_ENABLED=false (config.js)
     };
 
@@ -1310,7 +1310,7 @@ export function appInit() {
           setState({ curUser: boundName, boardLastSeen: parseInt(localStorage.getItem('fp_board_seen') || '0') });
           try { localStorage.setItem('fp_user', boundName); } catch {}
           subscribeToTasks(renderContent, loadComments);
-          loadShopping(renderContent);
+          subscribeToShopping(renderContent);
           loadComments(); loadPhotos(); loadMeals(renderContent);
         } else if (state.members.length > 0) {
           showNameScreen();
@@ -1364,7 +1364,7 @@ window._app.selectName = async (name) => {
   const ub = document.getElementById('user-btn');
   if (ub) ub.textContent = (state.av[name]||'👤') + ' ' + name;
   subscribeToTasks(renderContent, loadComments);
-  loadShopping(renderContent);
+  subscribeToShopping(renderContent);
   loadComments(); loadPhotos(); loadMeals(renderContent);
 };
 
@@ -1378,7 +1378,7 @@ window._app.confirmAddMember = (isFirst) => {
       setState({ curUser: name });
       try { localStorage.setItem('fp_user', name); } catch {}
       bindMemberUid(name).catch(() => {});
-      loadTasks(renderContent, loadComments); loadShopping(renderContent);
+      loadTasks(renderContent, loadComments); subscribeToShopping(renderContent);
     } else { showUserModal(); }
   });
 };
