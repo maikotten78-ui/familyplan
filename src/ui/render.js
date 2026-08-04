@@ -310,23 +310,34 @@ function renderTodayV2(iso, dayName) {
     return html;
   }
 
-  // #3 Überfällige – eigener Bereich mit rotem Tint
+  // #3 Überfällige – Karten mit rotem Rand-Akzent, echte Buttons statt Mini-Pillen
   if (overdueTasks.length) {
+    const MONTHS_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     html += `<div class="v2-overdue-section">
-      <div class="v2-section-title" style="color:#DC2626">⚠️ Nicht erledigt (${overdueTasks.length})</div>`;
+      <div class="v2-section-title v2-overdue-title">⚠️ Nicht erledigt (${overdueTasks.length})</div>`;
     html += overdueTasks.map(t => {
       const dates      = getOverdueDates(t);
       const oldestISO  = dates.length ? dates[dates.length - 1] : (t.date || iso);
-      const oldestDate = parseInt(oldestISO.split('-')[2]) + '.' + parseInt(oldestISO.split('-')[1]) + '.';
-      const sinceLabel = dates.length > 1 ? `${dates.length}× offen` : `seit ${oldestDate}`;
+      const oldestDay  = parseInt(oldestISO.split('-')[2]);
+      const oldestMon  = MONTHS_DE[parseInt(oldestISO.split('-')[1]) - 1];
+      const sinceLabel = dates.length > 1 ? `${dates.length}× nicht erledigt` : `Seit ${oldestDay}. ${oldestMon} überfällig`;
       const cardISO    = t.recurring === 'once' ? (t.date || iso) : oldestISO;
-      return `<div style="position:relative">${cardV2HTML(t, cardISO)}
-        <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;align-items:center">
-          <span style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;pointer-events:none">${sinceLabel}</span>
-          <button onclick="event.stopPropagation();window._app.overdueMarkDone('${t.id}','${cardISO}')"
-            style="background:#DC2626;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;border:none;cursor:pointer;font-family:inherit">✓</button>
-          <button onclick="event.stopPropagation();window._app.overdueSnooze('${t.id}','${cardISO}')"
-            style="background:#FEE2E2;color:#DC2626;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;border:none;cursor:pointer;font-family:inherit">→ Heute</button>
+      const safeTitle  = escapeHtml(t.title);
+      return `<div class="v2-overdue-card">
+        <div class="v2-overdue-card-main">
+          <div class="v2-overdue-ico" style="background:${t.color}">${t.emoji || '📋'}</div>
+          <div style="flex:1;min-width:0">
+            <div class="v2-overdue-card-title">${safeTitle}</div>
+            <div class="v2-overdue-card-sub">${sinceLabel}</div>
+          </div>
+        </div>
+        <div class="v2-overdue-card-actions">
+          <button class="v2-overdue-btn-done" onclick="event.stopPropagation();window._app.overdueMarkDone('${t.id}','${cardISO}')">
+            ✓ Erledigt
+          </button>
+          <button class="v2-overdue-btn-snooze" onclick="event.stopPropagation();window._app.overdueSnooze('${t.id}','${cardISO}')">
+            → Auf heute
+          </button>
         </div>
       </div>`;
     }).join('');
