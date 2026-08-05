@@ -4,6 +4,40 @@ import { escapeHtml } from './utils.js';
 import { checkFreeLimit, isPremiumActive } from './premium.js';
 import { registerListener } from './listener.js';
 
+// ── NEUE BEITRÄGE/ANTWORTEN ERKENNEN ────────────────────────────
+// Flache Liste aus Posts + verschachtelten Antworten, jeweils mit
+// Zeitstempel/Autor/Text – Basis für sowohl die Live-Erkennung (Diff
+// zweier Snapshots) als auch die "seit dem letzten Öffnen verpasst"-
+// Erkennung beim App-Start.
+function collectBoardItems(posts) {
+  const items = [];
+  Object.entries(posts || {}).forEach(([postId, post]) => {
+    items.push({ kind: 'post', postId, author: post.author, text: post.text, photo: post.photo, ts: post.ts || 0 });
+    Object.entries(post.replies || {}).forEach(([replyId, reply]) => {
+      items.push({ kind: 'reply', postId, replyId, author: reply.author, text: reply.text, ts: reply.ts || 0 });
+    });
+  });
+  return items;
+}
+
+// Alles seit einem Zeitpunkt (z.B. state.boardLastSeen), das nicht von
+// mir selbst stammt – für den "App gerade geöffnet"-Fall.
+function findUnseenBoardItems(posts, sinceTs, curUser) {
+  return collectBoardItems(posts)
+    .filter(it => it.ts > sinceTs && it.author !== curUser)
+    .sort((a, b) => b.ts - a.ts);
+}
+
+// Was ist zwischen zwei Snapshots neu hinzugekommen – für die Live-
+// Erkennung während die App bereits offen ist.
+function findNewBoardItems(oldPosts, newPosts, curUser) {
+  const seen = new Set();
+  collectBoardItems(oldPosts).forEach(it => seen.add(`${it.kind}:${it.postId}:${it.replyId || ''}`));
+  return collectBoardItems(newPosts)
+    .filter(it => it.author !== curUser && !seen.has(`${it.kind}:${it.postId}:${it.replyId || ''}`))
+    .sort((a, b) => b.ts - a.ts);
+}
+
 // ── REALTIME SUBSCRIBE ────────────────────────────────────────
 // Ersetzt den 5-Sekunden-Poll durch einen Firebase onValue-Listener
 // (gleiches Muster wie subscribeToTasks/subscribeToShopping). loadBoard()
@@ -40,11 +74,21 @@ export function subscribeToBoard(renderContent, updateBoardBadge) {
     const data = snapshot.val();
     const newStr = JSON.stringify(data || {});
     if (newStr !== JSON.stringify(oldPosts)) {
-      if (!isFirstLoad && state.tab === 'overview') {
-        const newPosts = Object.entries(data || {})
-          .filter(([id, p]) => !oldPosts[id] && p.author !== state.curUser)
-          .sort((a, b) => b[1].ts - a[1].ts);
-        if (newPosts.length) showBoardToast(newPosts[0][1]);
+      if (isFirstLoad) {
+        // App wurde gerade (neu) geöffnet: verpasste Beiträge/Antworten seit
+        // dem letzten Besuch zeigen – Ersatz für den Fall, dass Push-
+        // Benachrichtigungen deaktiviert sind. Nur wenn schon mal ein
+        // "zuletzt gesehen"-Zeitpunkt existiert, sonst würde bei der
+        // allerersten Nutzung die komplette Board-Historie als "neu" gelten.
+        if (state.boardLastSeen > 0) {
+          const missed = findUnseenBoardItems(data || {}, state.boardLastSeen, state.curUser);
+          if (missed.length) showBoardToast(missed[0], missed.length);
+        }
+      } else {
+        // App ist bereits offen (auf beliebigem Tab): sofort auf neue
+        // Beiträge/Antworten hinweisen, damit nichts untergeht
+        const fresh = findNewBoardItems(oldPosts, data || {}, state.curUser);
+        if (fresh.length) showBoardToast(fresh[0], fresh.length);
       }
       setState({ boardPosts: data || {} });
       updateBoardBadge();
@@ -76,12 +120,14 @@ export async function loadBoard(renderContent, updateBoardBadge) {
       const data = await fbGet('board');
       const newStr = JSON.stringify(data || {});
       if (newStr !== JSON.stringify(oldPosts)) {
-        // Neue Beiträge von anderen erkennen (nicht beim ersten Laden)
-        if (!isFirstLoad && state.tab === 'overview') {
-          const newPosts = Object.entries(data || {})
-            .filter(([id, p]) => !oldPosts[id] && p.author !== state.curUser)
-            .sort((a, b) => b[1].ts - a[1].ts);
-          if (newPosts.length) showBoardToast(newPosts[0][1]);
+        if (isFirstLoad) {
+          if (state.boardLastSeen > 0) {
+            const missed = findUnseenBoardItems(data || {}, state.boardLastSeen, state.curUser);
+            if (missed.length) showBoardToast(missed[0], missed.length);
+          }
+        } else {
+          const fresh = findNewBoardItems(oldPosts, data || {}, state.curUser);
+          if (fresh.length) showBoardToast(fresh[0], fresh.length);
         }
         setState({ boardPosts: data || {} });
         updateBoardBadge();
@@ -102,23 +148,43 @@ export async function loadBoard(renderContent, updateBoardBadge) {
   }
 }
 
-// ── TOAST FÜR NEUE BOARD-NACHRICHTEN ────────────────────────────
-export function showBoardToast(post) {
+// ── TOAST FÜR NEUE BOARD-NACHRICHTEN/ANTWORTEN ──────────────────
+// item: { kind:'post'|'reply', author, text, photo, postId }
+// totalCount: Gesamtzahl neuer/verpasster Einträge – bei mehreren wird
+// eine Sammel-Meldung statt der einzelnen Vorschau gezeigt.
+export function showBoardToast(item, totalCount = 1) {
   document.getElementById('board-toast')?.remove();
-  const av    = state.av?.[post.author] || '👤';
-  const text  = post.photo && !post.text ? '📷 Foto geteilt' : (post.text || '').slice(0, 60);
   const toast = document.createElement('div');
   toast.id = 'board-toast';
   toast.className = 'board-toast';
-  toast.innerHTML = `
-    <div class="board-toast-av">${state.photos?.[post.author] ? `<img src="${state.photos[post.author]}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : av}</div>
-    <div style="flex:1;min-width:0">
-      <div class="board-toast-author">${escapeHtml(post.author)}</div>
-      <div class="board-toast-text">${escapeHtml(text)}</div>
-    </div>`;
+
+  if (totalCount > 1) {
+    toast.innerHTML = `
+      <div class="board-toast-av">💬</div>
+      <div style="flex:1;min-width:0">
+        <div class="board-toast-author">Familien-Board</div>
+        <div class="board-toast-text">${totalCount} neue Beiträge – zuletzt von ${escapeHtml(item.author)}</div>
+      </div>`;
+  } else {
+    const av     = state.av?.[item.author] || '👤';
+    const prefix = item.kind === 'reply' ? '↩️ ' : '';
+    const text   = item.photo && !item.text ? '📷 Foto geteilt' : (item.text || '').slice(0, 60);
+    toast.innerHTML = `
+      <div class="board-toast-av">${state.photos?.[item.author] ? `<img src="${state.photos[item.author]}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">` : av}</div>
+      <div style="flex:1;min-width:0">
+        <div class="board-toast-author">${prefix}${escapeHtml(item.author)}</div>
+        <div class="board-toast-text">${escapeHtml(text)}</div>
+      </div>`;
+  }
+
   toast.onclick = () => {
     toast.remove();
-    document.getElementById('board-posts-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (state.tab !== 'overview') {
+      window._app.setTab('overview');
+      setTimeout(() => document.getElementById('board-posts-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+    } else {
+      document.getElementById('board-posts-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
   document.body.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add('show'));
@@ -132,7 +198,7 @@ export function showBoardToast(post) {
 export function updateBoardBadge() {
   const badge  = document.getElementById('board-badge');
   if (!badge) return;
-  const unseen = Object.values(state.boardPosts).filter(p => p.ts > state.boardLastSeen).length;
+  const unseen = findUnseenBoardItems(state.boardPosts, state.boardLastSeen, state.curUser).length;
   if (unseen > 0 && state.tab !== 'overview') {
     badge.textContent    = unseen > 9 ? '9+' : String(unseen);
     badge.style.display  = 'flex';
