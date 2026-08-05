@@ -593,6 +593,8 @@ export function obShowDemo() {
       { id: 'demo9', title: 'Geburtstag Oma',             emoji: '🎂', date: in3ISO, day: dayFromISO(in3ISO), time: '14:00', endTime: '17:00', recurring: 'yearly', recurringInterval: 1, weekdays: [], type: 'event', color: '#EC4899', assignments: {}, location: '', createdBy: 'Mama' },
       // Open To-Do
       { id: 'demotodo1', title: 'Urlaub buchen',          emoji: '✈️', openTodo: true, time: '12:00', color: '#F59E0B', assignments: {}, recurring: 'once', recurringInterval: 1, weekdays: [], type: 'task', createdBy: 'Mama', visibleTo: 'all' },
+      // Mehrtägiges Ganztages-Event (zeigt die "Ganztag"-Zeile im Kalender)
+      { id: 'demo10', title: 'Kindergarten-Ferien Lea',   emoji: '🏕️', date: tomorrowISO, day: dayFromISO(tomorrowISO), endDate: in3ISO, time: '00:00', endTime: '', allDay: true, recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#8B5CF6', assignments: {}, location: '', createdBy: 'Mama' },
     ],
 
     // ── Einkaufsliste ─────────────────────────────────────────────
@@ -610,12 +612,12 @@ export function obShowDemo() {
 
     // ── Mahlzeiten ────────────────────────────────────────────────
     meals: {
-      [todayISO]:    { breakfast: { name: 'Müsli mit Früchten', ingredients: ['Haferflocken','Milch','Banane'], savedAt: Date.now() }, lunch: null, dinner: { name: 'Spaghetti Bolognese', ingredients: ['Hackfleisch 500g','Pasta 400g','Dosentomaten 1 Dose','Zwiebeln 2','Knoblauch 3 Zehen','Olivenöl 2 EL'], recipeId: 'r1', savedAt: Date.now() } },
-      [tomorrowISO]: { breakfast: { name: 'Pfannkuchen', ingredients: ['Mehl 200g','Eier 2','Milch 300ml','Butter 1 EL'], recipeId: 'r2', savedAt: Date.now() }, lunch: { name: 'Reste vom Vortag', ingredients: [], savedAt: Date.now() }, dinner: null },
+      [todayISO]:    { breakfast: { name: 'Müsli mit Früchten', ingredients: ['Haferflocken','Milch','Banane'], savedAt: Date.now() }, lunch: null, dinner: { name: 'Spaghetti Bolognese', ingredients: ['Hackfleisch 500g','Pasta 400g','Dosentomaten 1 Dose','Zwiebeln 2','Knoblauch 3 Zehen','Olivenöl 2 EL'], savedAt: Date.now() } },
+      [tomorrowISO]: { breakfast: { name: 'Pfannkuchen', ingredients: ['Mehl 200g','Eier 2','Milch 300ml','Butter 1 EL'], savedAt: Date.now() }, lunch: { name: 'Reste vom Vortag', ingredients: [], savedAt: Date.now() }, dinner: null },
       [in2ISO]:      { breakfast: null, lunch: null, dinner: { name: 'Pizzaabend 🍕', ingredients: ['Pizzateig','Tomatensoße','Mozzarella','Salami'], savedAt: Date.now() } },
     },
     mealRecipes: {
-      'r1': {
+      'spaghetti_bolognese': {
         name: 'Spaghetti Bolognese',
         ingredients: ['Hackfleisch 500g','Pasta 400g','Dosentomaten 1 Dose','Zwiebeln 2','Knoblauch 3 Zehen','Olivenöl 2 EL'],
         prepTime: 35,
@@ -629,7 +631,7 @@ export function obShowDemo() {
           'Pasta nach Packungsanleitung al dente kochen. Mit der Soße servieren.',
         ],
       },
-      'r2': {
+      'pfannkuchen': {
         name: 'Pfannkuchen',
         ingredients: ['Mehl 200g','Eier 2','Milch 300ml','Butter 1 EL','Zucker 1 TL','Prise Salz'],
         prepTime: 20,
@@ -642,7 +644,7 @@ export function obShowDemo() {
           'Jeden Pfannkuchen goldbraun von beiden Seiten backen und warm halten.',
         ],
       },
-      'r3': {
+      'hühnchen_curry': {
         name: 'Hühnchen-Curry',
         ingredients: ['Hähnchenbrustfilet 600g','Kokosmilch 400ml','Currypaste 2 EL','Paprika 2','Zwiebel 1','Reis 300g'],
         prepTime: 30,
@@ -656,7 +658,7 @@ export function obShowDemo() {
           'Reis nach Packungsanleitung kochen und zusammen servieren.',
         ],
       },
-      'r4': {
+      'gemüse_frittata': {
         name: 'Gemüse-Frittata',
         ingredients: ['Eier 6','Zucchini 1','Paprika 1','Zwiebel 1','Parmesan 50g','Olivenöl 2 EL','Salz','Pfeffer'],
         prepTime: 25,
