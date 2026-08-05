@@ -138,14 +138,37 @@ function taskToEventKitFields(t) {
 }
 
 // ── EXPORT-RICHTUNG: Firebase -> EventKit ───────────────────────
-async function pushTaskToEventKit(t, calendarId, plugin) {
+// Findet einen bereits existierenden EventKit-Eintrag, der inhaltlich zum
+// Task passt (Titel/Zeit/Ganztag) – für den Fall, dass die gemerkte
+// appleEventId durch iCloud-Sync ausgetauscht wurde (siehe Import-Richtung
+// weiter unten). Verhindert, dass modifyEvent() nach einem ID-Austausch
+// fehlschlägt und createEvent() stattdessen ein Duplikat anlegt.
+function findMatchingEventKitEntry(fields, eventKitEvents) {
+  if (!eventKitEvents?.length) return null;
+  const normTitle = fields.title.trim().toLowerCase();
+  return eventKitEvents.find(ev =>
+    (ev.title || '').trim().toLowerCase() === normTitle &&
+    !!ev.isAllDay === !!fields.isAllDay &&
+    Math.abs(new Date(ev.startDate).getTime() - fields.startDate) < 5 * 60 * 1000 // 5 Min. Toleranz
+  ) || null;
+}
+
+async function pushTaskToEventKit(t, calendarId, plugin, eventKitEvents) {
   const fields = taskToEventKitFields(t);
   if (t.appleEventId) {
     try {
       await plugin.modifyEvent({ id: t.appleEventId, ...fields, calendarId });
       return t.appleEventId;
     } catch (e) {
-      // EventKit-Eintrag existiert evtl. nicht mehr -> neu anlegen
+      // Gemerkte ID nicht mehr gültig (z.B. iCloud-Sync hat sie ausgetauscht) ->
+      // erst nach passendem bestehenden Eintrag suchen, statt direkt neu anzulegen
+      const match = findMatchingEventKitEntry(fields, eventKitEvents);
+      if (match) {
+        try {
+          await plugin.modifyEvent({ id: match.id, ...fields, calendarId });
+          return match.id;
+        } catch (e2) { /* auch das fehlgeschlagen -> unten regulär neu anlegen */ }
+      }
     }
   }
   const { id } = await plugin.createEvent({ ...fields, calendarId });
@@ -284,7 +307,7 @@ async function runCalendarSyncInner({ silent = false } = {}) {
         continue;
       }
 
-      const appleEventId = await pushTaskToEventKit(t, calendarId, plugin);
+      const appleEventId = await pushTaskToEventKit(t, calendarId, plugin, eventKitEvents);
       if (appleEventId && appleEventId !== t.appleEventId) {
         await fbSet(`tasks/${t.id}/appleEventId`, appleEventId);
         await fbSet(`tasks/${t.id}/appleSyncedAt`, Date.now());
