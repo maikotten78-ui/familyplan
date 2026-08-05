@@ -19,6 +19,12 @@ function getMemberColor(name) {
   return state.memberColorMap[name] || '#9ba3af';
 }
 
+// Ganztägig ODER mehrtägig (endDate > date) – gehört in die "Ganztag"-Zeile,
+// nicht ins Stundenraster (dort war die Uhrzeit ab Tag 2 sowieso falsch/negativ)
+function isAllDayEvent(t) {
+  return t.allDay === true || (t.endDate && t.endDate > t.date);
+}
+
 function a(fn) { return `window._app.${fn}`; }
 
 // ── CARD V2 HTML ─────────────────────────────────────────────
@@ -505,7 +511,7 @@ function dayLabel(iso) {
 
 function buildTimelineColumn(iso, minH, maxH, hourPx) {
   const dayName  = dayFromISO(iso);
-  const dayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso)).sort((a, b) => a.time.localeCompare(b.time));
+  const dayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso) && !isAllDayEvent(t)).sort((a, b) => a.time.localeCompare(b.time));
 
   const placed = [];
   dayTasks.forEach(t => {
@@ -577,10 +583,18 @@ function render3DayTimeline(centerISO) {
   // Alle Tasks der 3 Tage für Zeitbereich-Berechnung
   const allTasks = days.flatMap(({ iso }) => {
     const name = dayFromISO(iso);
-    return state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso));
+    return state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso) && !isAllDayEvent(t));
   });
 
-  if (!allTasks.length) return '';
+  // Ganztägige Events (allDay oder mehrtägig) – eigene Zeile oben
+  const allDayEvents = days.flatMap(({ iso }) => {
+    const name = dayFromISO(iso);
+    return state.tasks
+      .filter(t => !t.openTodo && isVisible(t, name, iso) && isAllDayEvent(t))
+      .map(t => ({ t, iso }));
+  });
+
+  if (!allTasks.length && !allDayEvents.length) return '';
 
   const hourPx = 56;
   const starts = allTasks.map(t => parseInt(t.time.split(':')[0]));
@@ -589,8 +603,8 @@ function render3DayTimeline(centerISO) {
     const [eh, em] = t.endTime.split(':').map(Number);
     return em > 0 ? eh + 1 : eh;
   });
-  const minH   = Math.max(0, Math.min(...starts) - 1);
-  const maxH   = Math.min(23, Math.max(...starts, ...ends) + 1);
+  const minH   = allTasks.length ? Math.max(0, Math.min(...starts) - 1) : 7;
+  const maxH   = allTasks.length ? Math.min(23, Math.max(...starts, ...ends) + 1) : 21;
 
   // Stundenspalte links
   let hourRows = '';
@@ -605,22 +619,13 @@ function render3DayTimeline(centerISO) {
   const nowH  = now.getHours() + now.getMinutes() / 60;
   const nowPx = nowH >= minH && nowH <= maxH + 1 ? (nowH - minH) * hourPx : -1;
 
-  // Ganztägige Events (allDay oder mehrtägig) – eigene Zeile oben
-  const allDayEvents = days.flatMap(({ iso }) => {
-    const name = dayFromISO(iso);
-    return state.tasks
-      .filter(t => !t.openTodo && isVisible(t, name, iso) && (t.allDay || (t.endDate && t.endDate > t.date)))
-      .map(t => ({ t, iso }));
-  });
-
   const allDayRow = allDayEvents.length ? `
     <div class="tl3-allday-row">
       <div class="tl3-allday-spacer">Ganztag</div>
       ${days.map(({ iso }) => {
         const name = dayFromISO(iso);
         const dayAllDay = state.tasks.filter(t =>
-          !t.openTodo && isVisible(t, name, iso) &&
-          (t.allDay || (t.endDate && t.endDate > t.date))
+          !t.openTodo && isVisible(t, name, iso) && isAllDayEvent(t)
         );
         return `<div class="tl3-allday-col">
           ${dayAllDay.map(t => {
@@ -682,8 +687,8 @@ function render3DayTimeline(centerISO) {
 function render1DayTimeline(iso) {
   const todayISO = localISO();
   const dayName  = dayFromISO(iso);
-  const dayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso) && !t.allDay);
-  const allDayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso) && (t.allDay || (t.endDate && t.endDate > t.date)));
+  const dayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso) && !isAllDayEvent(t));
+  const allDayTasks = state.tasks.filter(t => !t.openTodo && isVisible(t, dayName, iso) && isAllDayEvent(t));
 
   if (!dayTasks.length && !allDayTasks.length) return '';
 
@@ -914,7 +919,13 @@ export function renderCalendar() {
     // Horizontale 7-Spalten-Zeitachse (Google/Apple Calendar Stil)
     const weekDays = getWeekDays(calSelISO);
     const allWeekTasks = weekDays.flatMap(({ iso, name }) =>
-      state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso))
+      state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso) && !isAllDayEvent(t))
+    );
+    // Ganztägige/mehrtägige Termine – eigene Zeile oberhalb des Stundenrasters
+    // (vorher fehlte diese Zeile in der Wochenansicht komplett, solche Termine
+    // landeten fälschlich mit ihrer Original-Uhrzeit im Stundenraster)
+    const weekAllDayEvents = weekDays.flatMap(({ iso, name }) =>
+      state.tasks.filter(t => !t.openTodo && isVisible(t, name, iso) && isAllDayEvent(t))
     );
 
     // #4: Immer Stundenraster zeigen – auch bei leerer Woche
@@ -932,6 +943,25 @@ export function renderCalendar() {
       const minH   = allWeekTasks.length ? Math.max(0, Math.min(...starts) - 1) : 7;
       const maxH   = allWeekTasks.length ? Math.min(23, Math.max(...starts, ...ends) + 1) : 21;
       const totalH = (maxH - minH + 1) * hourPx;
+
+      const weekAllDayRow = weekAllDayEvents.length ? `
+        <div class="wk7-allday-row">
+          <div class="wk7-allday-spacer">Ganztag</div>
+          ${weekDays.map(({ iso, name }) => {
+            const dayAllDay = state.tasks.filter(t =>
+              !t.openTodo && isVisible(t, name, iso) && isAllDayEvent(t)
+            );
+            return `<div class="wk7-allday-col">
+              ${dayAllDay.map(t => {
+                const color = getMemberColor(t.createdBy || getA(t, iso).assignedTo || '');
+                return `<div class="tl3-allday-event" style="background:${color || t.color}"
+                  onclick="window._app.showAssignModal('${t.id}','${iso}')">
+                  ${escapeHtml(t.emoji || '')} ${escapeHtml(t.title)}
+                </div>`;
+              }).join('')}
+            </div>`;
+          }).join('')}
+        </div>` : '';
 
       // Jetzt-Linie Position
       const now    = new Date();
@@ -979,6 +1009,7 @@ export function renderCalendar() {
           <div class="wk7-hour-spacer"></div>
           ${hdrCells}
         </div>
+        ${weekAllDayRow}
         <div class="wk7-body" id="wk7-body">
           <div class="tl3-hours">${hoursHTML}</div>
           <div class="wk7-cols">${colsHTML}</div>

@@ -781,6 +781,10 @@
 /* ── 7-SPALTEN-WOCHENANSICHT ─────────────────────────────────── */
 .wk7-wrap{margin-top:4px;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.10);border:1.5px solid var(--tl-line)}
 .wk7-header{display:grid;grid-template-columns:40px repeat(7,minmax(0,1fr));border-bottom:2px solid var(--tl-col-sep);position:sticky;top:0;background:var(--surface);z-index:3}
+.wk7-allday-row{display:grid;grid-template-columns:40px repeat(7,minmax(0,1fr));border-bottom:2px solid var(--tl-col-sep);background:var(--tl-today-bg)}
+.wk7-allday-spacer{border-right:2px solid var(--tl-col-sep);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;padding:4px 2px;text-align:center;line-height:1.2}
+.wk7-allday-col{border-right:1.5px solid var(--tl-col-sep);padding:3px 2px;min-height:24px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.wk7-allday-col:last-child{border-right:none}
 .wk7-hour-spacer{border-right:2px solid var(--tl-col-sep);background:var(--bg3)}
 .wk7-col-hdr{text-align:center;padding:6px 2px;cursor:pointer;border-right:1.5px solid var(--tl-col-sep);transition:background 0.15s;min-width:0;overflow:hidden}
 .wk7-col-hdr:last-child{border-right:none}
