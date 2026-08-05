@@ -153,6 +153,31 @@ async function pushTaskToEventKit(t, calendarId, plugin) {
 }
 
 // ── IMPORT-RICHTUNG: EventKit -> Firebase ────────────────────────
+// iOS tauscht die eventIdentifier eines neu erstellten EventKit-Termins oft
+// kurz nach der iCloud-Synchronisierung gegen eine permanente ID aus (bekanntes
+// EventKit-Verhalten). Reine ID-Abgleiche würden solche Termine dann fälschlich
+// als "neu" erkennen und ein zweites Mal importieren. Dieser Fingerabdruck-
+// Abgleich erkennt den Fall: alte ID ist aus dem Kalender verschwunden, Titel/
+// Datum/Uhrzeit stimmen überein und der Import liegt noch nicht lange zurück.
+function findLikelyIdReassignment(ev, eventKitById) {
+  const start = new Date(ev.startDate);
+  const dateISO  = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}`;
+  const timeStr  = ev.isAllDay ? '00:00' : `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
+  const normTitle = (ev.title || 'Termin').trim().toLowerCase();
+  const cutoff = Date.now() - 10 * 24 * 60 * 60 * 1000; // 10 Tage
+
+  return state.tasks.find(t =>
+    t.appleEventId &&
+    t.appleEventId !== ev.id &&
+    !eventKitById.has(t.appleEventId) &&        // alte ID existiert nicht mehr im Kalender
+    (t.appleSyncedAt || 0) > cutoff &&
+    (t.title || '').trim().toLowerCase() === normTitle &&
+    t.date === dateISO &&
+    !!t.allDay === !!ev.isAllDay &&
+    (ev.isAllDay || t.time === timeStr)
+  ) || null;
+}
+
 function importEventFromEventKit(ev) {
   const existing = state.tasks.find(t => t.appleEventId === ev.id);
   if (existing) return null;
@@ -274,6 +299,19 @@ async function runCalendarSyncInner({ silent = false } = {}) {
 
   for (const ev of eventKitEvents) {
     try {
+      if (state.tasks.some(t => t.appleEventId === ev.id)) { stats.skipped++; continue; }
+
+      // EventKit hat die ID eines bereits importierten Termins ausgetauscht
+      // (iCloud-Sync) -> Link reparieren statt Duplikat anlegen
+      const reassigned = findLikelyIdReassignment(ev, eventKitById);
+      if (reassigned) {
+        await fbSet(`tasks/${reassigned.id}/appleEventId`, ev.id);
+        await fbSet(`tasks/${reassigned.id}/appleSyncedAt`, Date.now());
+        setState({ tasks: state.tasks.map(x => x.id === reassigned.id ? { ...x, appleEventId: ev.id, appleSyncedAt: Date.now() } : x) });
+        stats.relinked = (stats.relinked || 0) + 1;
+        continue;
+      }
+
       const payload = importEventFromEventKit(ev);
       if (!payload) { stats.skipped++; continue; }
       const result = await fbPush('tasks', payload);
