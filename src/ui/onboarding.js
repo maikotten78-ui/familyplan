@@ -528,7 +528,7 @@ export function showInstallPrompt(_retryCount = 0) {
       <div class="modal-sub">Füge famiplan zum Homescreen hinzu.</div>
     </div>
     <div style="background:#F0FBFC;border-radius:14px;padding:16px;margin-bottom:16px">
-      <div style="font-size:11px;font-weight:700;color:#8b5cf6;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">${platform}</div>
+      <div style="font-size:11px;font-weight:700;color:#1D7A87;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">${platform}</div>
       <div style="display:flex;flex-direction:column;gap:10px">${steps}</div>
     </div>
     <button class="submit-btn" onclick="window._app.closeModal()">Verstanden ✓</button>
@@ -594,7 +594,7 @@ export function obShowDemo() {
       // Open To-Do
       { id: 'demotodo1', title: 'Urlaub buchen',          emoji: '✈️', openTodo: true, time: '12:00', color: '#F59E0B', assignments: {}, recurring: 'once', recurringInterval: 1, weekdays: [], type: 'task', createdBy: 'Mama', visibleTo: 'all' },
       // Mehrtägiges Ganztages-Event (zeigt die "Ganztag"-Zeile im Kalender)
-      { id: 'demo10', title: 'Kindergarten-Ferien Lea',   emoji: '🏕️', date: tomorrowISO, day: dayFromISO(tomorrowISO), endDate: in3ISO, time: '00:00', endTime: '', allDay: true, recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#8B5CF6', assignments: {}, location: '', createdBy: 'Mama' },
+      { id: 'demo10', title: 'Kindergarten-Ferien Lea',   emoji: '🏕️', date: tomorrowISO, day: dayFromISO(tomorrowISO), endDate: in3ISO, time: '00:00', endTime: '', allDay: true, recurring: 'once', recurringInterval: 1, weekdays: [], type: 'event', color: '#2563EB', assignments: {}, location: '', createdBy: 'Mama' },
     ],
 
     // ── Einkaufsliste ─────────────────────────────────────────────
