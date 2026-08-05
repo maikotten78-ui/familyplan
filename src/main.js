@@ -52,6 +52,8 @@ import { initRevenueCat, isRevenueCatSupported } from './modules/revenuecat.js';
 import { openModal, closeModal, showSync } from './ui/modal.js';
 import { setTab, setDay, updateNav, renderDayPills, startTabTour,
          initSwipe, initBottomNavFix } from './ui/nav.js';
+import { showSearchModal, runGlobalSearch, searchGoToTask, searchGoToMeal,
+         searchGoToRecipe, searchGoToShop, searchGoToBoard } from './ui/search.js';
 
 // renderContent kommt aus render.js
 import { renderContent, toggleShopCat, showOvTaskMenu, showAssignModal, showCommentsModal } from './ui/render.js';
@@ -611,6 +613,8 @@ window._app = {
   },
   setTab, setDay, openModal, closeModal, showSync,
   startTabTour,
+  showSearchModal, runGlobalSearch, searchGoToTask, searchGoToMeal,
+  searchGoToRecipe, searchGoToShop, searchGoToBoard,
   getTab: () => state.tab,
   authSetMode, authSubmit, authGoogle, authApple, authForgotPassword,
   authTogglePasswordVisibility,
