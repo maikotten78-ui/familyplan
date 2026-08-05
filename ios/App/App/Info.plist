@@ -26,6 +26,10 @@
 	<string>famiplan möchte auf deinen Kalender zugreifen, um Familientermine mit deinem Apple-Kalender zu synchronisieren.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>famiplan möchte auf deinen Kalender zugreifen, um Familientermine mit deinem Apple-Kalender zu synchronisieren.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>famiplan möchte auf deine Kamera zugreifen, damit du Rezepte aus Kochbüchern oder Zeitschriften direkt abfotografieren kannst.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>famiplan möchte auf deine Fotos zugreifen, damit du Fotos für Beiträge und Profile auswählen kannst.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
