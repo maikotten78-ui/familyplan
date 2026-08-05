@@ -226,6 +226,22 @@ function startTour(steps, tab) {
 
     // Fade + slide in tooltip
     requestAnimationFrame(() => {
+      // Sicherstellen, dass die Box vollständig im sichtbaren Bereich bleibt –
+      // bei sehr großen Zielen (z.B. "scroll-area", das fast den ganzen
+      // Bildschirm einnimmt) oder längeren Hilfetexten konnte die reine
+      // Positionierung anhand des Zielrands die Box teils aus dem
+      // Bildschirm schieben. Erst nach dem Setzen des Inhalts messen wir
+      // die tatsächliche Höhe und korrigieren top/bottom bei Bedarf.
+      const margin = 12;
+      const tH = tooltip.offsetHeight;
+      if (isAbove) {
+        const bottomVal = parseFloat(tooltip.style.bottom) || 0;
+        const topEdge = vh - bottomVal - tH;
+        if (topEdge < margin) tooltip.style.bottom = Math.max(margin, vh - margin - tH) + 'px';
+      } else {
+        const topVal = parseFloat(tooltip.style.top) || 0;
+        if (topVal + tH > vh - margin) tooltip.style.top = Math.max(margin, vh - margin - tH) + 'px';
+      }
       tooltip.style.opacity = '1';
       const inner = tooltip.querySelector('div');
       if (inner) requestAnimationFrame(() => { inner.style.transform = 'translateY(0)'; });
